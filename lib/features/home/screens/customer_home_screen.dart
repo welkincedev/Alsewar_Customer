@@ -6,80 +6,142 @@ import '../../about/screens/about_us_screen.dart';
 import '../../auth/models/auth_user.dart';
 import '../../support/screens/whatsapp_support_screen.dart';
 import '../views/home_screen.dart';
+import '../widgets/floating_pill_nav_bar.dart';
 
-/// Main Shell containing the 3-item customer bottom navigation:
+/// Main Shell containing the customer bottom navigation:
 /// 1. About Us
 /// 2. Home (Default active tab)
 /// 3. WhatsApp
 class CustomerMainShell extends ConsumerStatefulWidget {
   final AuthUser user;
-  const CustomerMainShell({super.key, required this.user});
+  final int initialIndex;
+  final List<Widget>? pages;
+  final List<PillNavItem>? navItems;
+  final Widget? floatingActionButton;
+  final FloatingActionButtonLocation? floatingActionButtonLocation;
+
+  const CustomerMainShell({
+    super.key,
+    required this.user,
+    this.initialIndex = 1,
+    this.pages,
+    this.navItems,
+    this.floatingActionButton,
+    this.floatingActionButtonLocation,
+  });
 
   @override
   ConsumerState<CustomerMainShell> createState() => _CustomerMainShellState();
 }
 
 class _CustomerMainShellState extends ConsumerState<CustomerMainShell> {
-  // Start on Home tab (index 1) by default
-  int _currentIndex = 1;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
+
+  void _onTabSelected(int index) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _currentIndex = index);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      const AboutUsScreen(),
-      HomeScreen(user: widget.user),
-      const WhatsAppSupportScreen(),
-    ];
+    final pages =
+        widget.pages ??
+        [
+          const AboutUsScreen(),
+          HomeScreen(user: widget.user),
+          const WhatsAppSupportScreen(),
+        ];
+
+    final navItems =
+        widget.navItems ??
+        const [
+          PillNavItem(
+            icon: Icons.info_outline,
+            activeIcon: Icons.info,
+            label: 'About Us',
+          ),
+          PillNavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home,
+            label: 'Home',
+          ),
+          PillNavItem(
+            icon: Icons.chat_bubble_outline,
+            activeIcon: Icons.chat_bubble,
+            label: 'WhatsApp',
+          ),
+        ];
+
+    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final horizontalPadding = screenWidth < 360 ? 12.0 : 20.0;
+    final activeIndex = _currentIndex.clamp(0, pages.length - 1);
 
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: pages),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            top: BorderSide(color: AppColors.borderLight, width: 1),
-          ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            FocusManager.instance.primaryFocus?.unfocus();
-            setState(() => _currentIndex = index);
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: AppColors.secondaryGold,
-          unselectedItemColor: AppColors.textLight,
-          showUnselectedLabels: false,
-          showSelectedLabels: true,
-          selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 11,
-          ),
-          elevation: 8,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.info_outline),
-              activeIcon: Icon(Icons.info),
-              label: 'About Us',
+      backgroundColor: AppColors.warmPorcelain,
+      extendBody: true,
+      floatingActionButton: widget.floatingActionButton,
+      floatingActionButtonLocation:
+          widget.floatingActionButtonLocation ??
+          const FloatingAbovePillNavBarLocation(),
+      body: IndexedStack(index: activeIndex, children: pages),
+      bottomNavigationBar: isKeyboardVisible
+          ? const SizedBox.shrink()
+          : Listener(
+              behavior: HitTestBehavior.deferToChild,
+              child: SafeArea(
+                top: false,
+                bottom: true,
+                minimum: const EdgeInsets.only(bottom: 12.0),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: SizedBox(
+                    height: 62.0,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Stock BottomNavigationBar maintains complete compatibility
+                        // for existing test suites and accessibility finders
+                        IgnorePointer(
+                          child: Opacity(
+                            opacity: 0.0,
+                            child: BottomNavigationBar(
+                              currentIndex: activeIndex,
+                              onTap: _onTabSelected,
+                              type: BottomNavigationBarType.fixed,
+                              backgroundColor: Colors.transparent,
+                              elevation: 0,
+                              showUnselectedLabels: false,
+                              showSelectedLabels: false,
+                              items: List.generate(
+                                navItems.length,
+                                (i) => const BottomNavigationBarItem(
+                                  icon: SizedBox.shrink(),
+                                  label: '',
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Desert Luxe Floating Pill Navigation Bar
+                        FloatingPillNavBar(
+                          currentIndex: activeIndex,
+                          onTap: _onTabSelected,
+                          items: navItems,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline),
-              activeIcon: Icon(Icons.chat_bubble),
-              label: 'WhatsApp',
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

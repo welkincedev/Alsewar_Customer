@@ -38,6 +38,9 @@ Base URL in local development: `http://localhost:8000`
    - [Overview & Walk-In Service Flow](#71-overview--walk-in-service-flow)
    - [Manager Customer Listing & Detail (`/api/manager/customers/`)](#72-manager-customer-listing--detail)
    - [Manager Vehicle Management (`/api/manager/vehicles/`)](#73-manager-vehicle-management)
+     - [Manager Cross-Branch Vehicle History (`/api/manager/vehicles/{id}/history/`)](#736-manager-cross-branch-vehicle-service-history)
+   - [Customer Self-Service Vehicle Access (`/api/customer/vehicles/`)](#74-customer-self-service-vehicle-access)
+     - [Customer Vehicle Service History (`/api/customer/vehicles/{id}/history/`)](#744-customer-vehicle-service-history)
 8. [Service Catalogue & Branch Services Module API Reference](#8-service-catalogue--branch-services-module-api-reference)
    - [Admin Service Catalogue Management (`/api/admin/services/`)](#81-admin-service-catalogue-management)
    - [Admin Branch Service Assignments (`/api/admin/branch-services/`)](#82-admin-branch-service-assignments)
@@ -1291,6 +1294,7 @@ Allows branch managers to search and inspect registered vehicles.
   * `customer_id` *(optional)*: Filter vehicles belonging to a specific customer ID.
   * `plate_number` *(optional)*: Filter by plate number (case-insensitive substring match).
   * `search` *(optional)*: Search across `plate_number`, `make`, `model`, or `vin`.
+  * `is_active` *(optional)*: Filter by active status (`true`, `false`, or `ALL`). Defaults to active vehicles only (`is_active=True`).
 
 ##### Success Response (`HTTP 200 OK`):
 ```json
@@ -1433,16 +1437,112 @@ Returns the updated vehicle object.
 }
 ```
 
+##### Behavior & Protection:
+* Sets `is_active=False` in the database (safe soft deletion).
+* Prevents `ProtectedError` (HTTP 500) when existing service visits reference the vehicle.
+* Preserves all linked `ServiceVisit`, `VisitService`, `ServiceVisitStatusHistory`, and `Review` records.
+* Inactive vehicles are excluded from default manager vehicle listings (`GET /api/manager/vehicles/`) and detail lookups.
+* Lifetime cross-branch service history remains accessible via `GET /api/manager/vehicles/{id}/history/`.
+* A repeated `DELETE` returns `HTTP 404 Not Found`.
+
+#### 7.3.6 Manager Cross-Branch Vehicle Service History
+* **URL:** `GET /api/manager/vehicles/{id}/history/` (or `GET /api/manager/vehicles/{id}/history`)
+* **Access:** **Manager only** (`IsManagerRole`)
+* **Headers:** `Authorization: Bearer <manager_access_token>`
+* **Description:** Returns the lifetime service visit history for the requested vehicle across all service centre branches. Manager write permissions and existing visit detail views remain strictly branch-scoped.
+* **Success Response (`HTTP 200 OK`):**
+  ```json
+  {
+    "vehicle": {
+      "id": 1,
+      "customer": {
+        "id": 4,
+        "username": "cust_owner",
+        "email": "cust1@alsewar.com",
+        "phone": "+96891234567",
+        "first_name": "Ahmed",
+        "last_name": "Al Harthy"
+      },
+      "branch": {
+        "id": 1,
+        "name": "Muscat Main Branch",
+        "code": "MCT-01"
+      },
+      "plate_number": "1111-AA",
+      "make": "Toyota",
+      "model": "Camry",
+      "year": 2022,
+      "color": "White",
+      "vin": "VIN1111111111",
+      "created_at": "2026-10-10T12:00:00Z",
+      "updated_at": "2026-10-10T12:00:00Z"
+    },
+    "visit_count": 2,
+    "last_visit_date": "2026-10-12T14:30:00Z",
+    "visits": [
+      {
+        "id": 12,
+        "visit_number": "SV-V1-002",
+        "branch": {
+          "id": 2,
+          "name": "Salalah Branch",
+          "code": "SLL-01",
+          "city": "Salalah"
+        },
+        "branch_details": {
+          "id": 2,
+          "name": "Salalah Branch",
+          "code": "SLL-01",
+          "city": "Salalah"
+        },
+        "current_stage": {
+          "id": 3,
+          "name": "Completed",
+          "code": "COMPLETED",
+          "order": 3,
+          "is_terminal": true
+        },
+        "services": [
+          {
+            "id": 2,
+            "name": "Brake Inspection",
+            "description": "Front & rear brake check",
+            "notes": ""
+          }
+        ],
+        "status_history": [
+          {
+            "id": 25,
+            "stage_name": "Completed",
+            "stage_code": "COMPLETED",
+            "notes": "Work finished",
+            "changed_by": "mgr_branch_b",
+            "created_at": "2026-10-12T16:00:00Z"
+          }
+        ],
+        "notes": "Brake inspection at Branch B",
+        "created_at": "2026-10-12T14:30:00Z",
+        "updated_at": "2026-10-12T16:00:00Z"
+      }
+    ]
+  }
+  ```
+* **Error Responses:**
+  * `HTTP 401 Unauthorized`: Missing or invalid Bearer token.
+  * `HTTP 403 Forbidden`: Authenticated user is not a manager.
+  * `HTTP 404 Not Found`: Vehicle with requested ID does not exist.
+
 ---
 
 ### 7.4 Customer Self-Service Vehicle Access
 
-Customers can manage their own registered vehicles directly from the customer app. Data isolation guarantees that customers can only view, edit, or delete their own vehicles.
+Customers can manage their own registered vehicles directly from the customer app. Data isolation guarantees that customers can only view, edit, or delete their own vehicles. Soft-deleted/archived vehicles are automatically excluded from the active fleet list.
 
 #### 7.4.1 List Own Vehicles
 * **URL:** `GET /api/customer/vehicles/` (or `GET /api/customer/vehicles`)
 * **Access:** **Customer only** (`IsCustomerRole`)
 * **Headers:** `Authorization: Bearer <customer_access_token>`
+* **Description:** Returns all active vehicles owned by the authenticated customer. Excludes soft-deleted vehicles.
 
 ##### Success Response (`HTTP 200 OK`):
 ```json
@@ -1503,10 +1603,101 @@ Customers can register a new vehicle under their own account. The owner is autom
 ```
 
 #### 7.4.3 Customer Vehicle Detail, Update, and Delete
-* **Get Vehicle:** `GET /api/customer/vehicles/{id}/`
-* **Update Vehicle:** `PATCH /api/customer/vehicles/{id}/`
-* **Delete Vehicle:** `DELETE /api/customer/vehicles/{id}/`
-* **Security & Isolation:** Accessing another customer's vehicle ID returns `HTTP 404 Not Found`.
+* `GET /api/customer/vehicles/{id}/` — Retrieve own vehicle. Returns active vehicle details (`HTTP 200 OK`). Archived vehicles return `HTTP 404 Not Found`.
+* `PATCH /api/customer/vehicles/{id}/` — Update own vehicle details (`HTTP 200 OK`).
+* `DELETE /api/customer/vehicles/{id}/` — Soft-delete own vehicle (`HTTP 200 OK`).
+  * **Headers:** `Authorization: Bearer <customer_access_token>`
+  * **Method:** `DELETE`
+  * **Success Response (`HTTP 200 OK`):**
+    ```json
+    {
+      "detail": "Vehicle deleted successfully."
+    }
+    ```
+  * **Behavior & Protection:**
+    * Sets `is_active=False` in the database (safe soft delete).
+    * The vehicle immediately disappears from active list endpoints (`GET /api/customer/vehicles/`).
+    * Preserves all linked `ServiceVisit`, `VisitService`, `ServiceVisitStatusHistory`, and `Review` records without data loss.
+    * Historical service visit records remain queryable via `GET /api/customer/vehicles/{id}/history/`.
+    * A repeated `DELETE` returns `HTTP 404 Not Found`.
+* **Access Control Note:** Attempting to retrieve, modify, or delete a vehicle belonging to another customer returns `HTTP 404 Not Found`.
+
+#### 7.4.4 Customer Vehicle Service History
+* **URL:** `GET /api/customer/vehicles/{id}/history/` (or `GET /api/customer/vehicles/{id}/history`)
+* **Access:** **Customer only** (`IsCustomerRole`)
+* **Headers:** `Authorization: Bearer <customer_access_token>`
+* **Description:** Returns the lifetime service visit history for a specific vehicle owned by the authenticated customer. Returns `404 Not Found` if the vehicle belongs to another customer account or does not exist.
+* **Success Response (`HTTP 200 OK`):**
+  ```json
+  {
+    "vehicle": {
+      "id": 1,
+      "branch": {
+        "id": 1,
+        "name": "Muscat Main Branch",
+        "code": "MCT-01"
+      },
+      "plate_number": "1111-AA",
+      "make": "Toyota",
+      "model": "Camry",
+      "year": 2022,
+      "color": "White",
+      "vin": "VIN1111111111",
+      "created_at": "2026-10-10T12:00:00Z",
+      "updated_at": "2026-10-10T12:00:00Z"
+    },
+    "visit_count": 2,
+    "last_visit_date": "2026-10-12T14:30:00Z",
+    "visits": [
+      {
+        "id": 12,
+        "visit_number": "SV-V1-002",
+        "branch": {
+          "id": 2,
+          "name": "Salalah Branch",
+          "city": "Salalah",
+          "phone": "+96823123456"
+        },
+        "branch_details": {
+          "id": 2,
+          "name": "Salalah Branch",
+          "city": "Salalah",
+          "phone": "+96823123456"
+        },
+        "current_stage": {
+          "id": 3,
+          "name": "Completed",
+          "code": "COMPLETED",
+          "description": "Service completed and ready for pickup",
+          "is_terminal": true
+        },
+        "services": [
+          {
+            "id": 2,
+            "name": "Brake Inspection",
+            "description": "Front & rear brake check"
+          }
+        ],
+        "status_history": [
+          {
+            "id": 25,
+            "stage_name": "Completed",
+            "stage_description": "Service completed and ready for pickup",
+            "notes": "Work finished",
+            "created_at": "2026-10-12T16:00:00Z"
+          }
+        ],
+        "notes": "Brake inspection at Branch B",
+        "created_at": "2026-10-12T14:30:00Z",
+        "updated_at": "2026-10-12T16:00:00Z"
+      }
+    ]
+  }
+  ```
+* **Error Responses:**
+  * `HTTP 401 Unauthorized`: Missing or invalid Bearer token.
+  * `HTTP 403 Forbidden`: Authenticated user is not in the `CUSTOMER` role.
+  * `HTTP 404 Not Found`: Vehicle does not exist, or belongs to another customer account.
 
 ---
 
@@ -1990,7 +2181,10 @@ Allows customers to inspect their service history and follow current visit progr
 #### 9.5.1 List Own Service Visits
 * **URL:** `GET /api/customer/visits/` (or `GET /api/customer/visits`)
 * **Access:** **Customer only** (`IsCustomerRole`)
-* **Scope:** Returns only visits where `customer = request.user`.
+* **Headers:** `Authorization: Bearer <customer_access_token>`
+* **Query Parameters:**
+  * `vehicle_id` *(integer, optional)*: Filter visits to only those matching the specified vehicle ID. (Also accepts alias `vehicle`).
+* **Scope:** Returns only visits where `customer = request.user`. If `vehicle_id` belongs to another customer, an empty array `[]` is returned. If `vehicle_id` is not a valid integer, returns `HTTP 400 Bad Request`.
 * **Success Response (`HTTP 200 OK`):**
   ```json
   [
@@ -2670,6 +2864,7 @@ Generic routes available to any authenticated user:
 * **`branches.0001_initial`**: Applied (`[X]`).
 * **`branches.0002_managerprofile`**: Applied (`[X]`).
 * **`customers.0001_initial`**: Applied (`[X]`).
+* **`customers.0002_vehicle_is_active`**: Applied (`[X]`).
 * **`services.0001_initial`**: Applied (`[X]`).
 * **`visits.0001_initial`**: Applied (`[X]`).
 * **`reviews.0001_initial`**: Generated (`[ ]` unapplied on development database).
@@ -2693,11 +2888,11 @@ All test suites were executed directly against the test runner with zero failure
 | **Reviews App** | `python manage.py test app.reviews` | **28** | **OK (Passed)** | 1-5 rating validation, optional feedback, completed terminal stage eligibility, cross-customer isolation, duplicate review rejection, manager branch isolation & read-only access, admin listing/filters/search, admin moderation PATCH, admin DELETE, and RBAC security. |
 | **Visits App** | `python manage.py test app.visits` | **24** | **OK (Passed)** | Stage CRUD, duplicate prevention, visit creation, vehicle mismatch rejection, branch service check, unassigned manager check, cross-branch isolation, status updates, audit logs, and customer isolation. |
 | **Services App** | `python manage.py test app.services` | **34** | **OK (Passed)** | Admin catalogue CRUD, duplicate prevention, branch assignments, manager scoping & isolation, customer browsing, and RBAC permissions. |
-| **Customers App** | `python manage.py test app.customers` | **18** | **OK (Passed)** | Walk-in customer registration, vehicle registration, duplicate plate prevention, and customer self-service isolation. |
+| **Customers App** | `python manage.py test app.customers` | **47** | **OK (Passed)** | Walk-in customer registration, vehicle registration, duplicate plate prevention, customer self-service isolation, customer/manager safe soft deletion (`is_active=False`), 401/403/404 handling, active list filtering, and service history preservation. |
 | **Managers App** | `python manage.py test app.managers` | **8** | **OK (Passed)** | Assigned manager, unassigned manager, trailing slash variants, RBAC permissions, and isolation tests. |
 | **Branches App** | `python manage.py test app.branches` | **41** | **OK (Passed)** | Branch CRUD, business hours, and manager assignment tests. |
 | **Accounts App** | `python manage.py test app.accounts` | **28** | **OK (Passed)** | Login, signup, token refresh, and manager CRUD tests. |
-| **Full Suite** | `python manage.py test` | **223** | **OK (Passed)** | Complete project regression suite (223 tests passed in ~537.7s). |
+| **Full Suite** | `python manage.py test` | **257** | **OK (Passed)** | Complete project regression suite (257 tests passed in ~403.9s). |
 
 ---
 

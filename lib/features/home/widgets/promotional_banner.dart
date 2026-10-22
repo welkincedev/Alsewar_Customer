@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_text_styles.dart';
 import '../../services/screens/services_screen.dart';
 
 /// Promotional banner carousel for campaigns, seasonal discounts, and brand offers.
@@ -74,8 +75,8 @@ class _PromotionalBannerState extends State<PromotionalBanner> {
               height: 5,
               decoration: BoxDecoration(
                 color: _currentPage == i
-                    ? AppColors.secondaryGold
-                    : AppColors.borderLight,
+                    ? AppColors.champagneGold
+                    : AppColors.sandBeige,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -89,15 +90,15 @@ class _PromotionalBannerState extends State<PromotionalBanner> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF262626), Color(0xFF141414)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppColors.charcoalGradient,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.champagneGold.withValues(alpha: 0.25),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
+            color: AppColors.deepCharcoal.withValues(alpha: 0.2),
             blurRadius: 14,
             offset: const Offset(0, 5),
           ),
@@ -135,7 +136,8 @@ class _PromotionalBannerState extends State<PromotionalBanner> {
                     child: Text(
                       promo.badge,
                       style: const TextStyle(
-                        color: Colors.black,
+                        fontFamily: AppTextStyles.headingFont,
+                        color: AppColors.deepCharcoal,
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.1,
@@ -145,7 +147,8 @@ class _PromotionalBannerState extends State<PromotionalBanner> {
                   Text(
                     'PROMO',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.35),
+                      fontFamily: AppTextStyles.bodyFont,
+                      color: AppColors.sandBeige.withValues(alpha: 0.4),
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
@@ -163,7 +166,8 @@ class _PromotionalBannerState extends State<PromotionalBanner> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: Colors.white,
+                      fontFamily: AppTextStyles.headingFont,
+                      color: AppColors.pureWhite,
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
                       letterSpacing: -0.2,
@@ -173,7 +177,8 @@ class _PromotionalBannerState extends State<PromotionalBanner> {
                   Text(
                     promo.subtitle,
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
+                      fontFamily: AppTextStyles.bodyFont,
+                      color: AppColors.sandBeige.withValues(alpha: 0.8),
                       fontSize: 12,
                       height: 1.3,
                     ),
@@ -194,6 +199,7 @@ class _PromotionalBannerState extends State<PromotionalBanner> {
                     Text(
                       'View Details',
                       style: TextStyle(
+                        fontFamily: AppTextStyles.bodyFont,
                         color: promo.accentColor,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,

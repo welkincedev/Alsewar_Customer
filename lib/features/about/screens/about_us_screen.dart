@@ -4,16 +4,33 @@ import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text_styles.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../branches/screens/branch_list_screen.dart';
+import '../../home/widgets/floating_pill_nav_bar.dart';
 
 /// Development-stage About Us Screen highlighting company background,
 /// core automotive care services, and operational standards.
 class AboutUsScreen extends StatelessWidget {
-  const AboutUsScreen({super.key});
+  final Widget? floatingActionButton;
+  final FloatingActionButtonLocation? floatingActionButtonLocation;
+
+  const AboutUsScreen({
+    super.key,
+    this.floatingActionButton,
+    this.floatingActionButtonLocation,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final bottomClearance = FloatingPillNavBarUtils.calculateBottomClearance(
+      context,
+      clearance: 32.0,
+    );
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: AppColors.warmPorcelain,
+      floatingActionButton: floatingActionButton,
+      floatingActionButtonLocation:
+          floatingActionButtonLocation ??
+          const FloatingAbovePillNavBarLocation(),
       appBar: AppBar(
         title: const Text('About Al Sewar'),
         backgroundColor: AppColors.primaryBlack,
@@ -22,7 +39,12 @@ class AboutUsScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 24,
+            bottom: bottomClearance,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -74,12 +96,18 @@ class AboutUsScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1E1E1E), Color(0xFF111111)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: AppColors.charcoalGradient,
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.champagneGold.withValues(alpha: 0.25),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.deepCharcoal.withValues(alpha: 0.2),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,7 +219,6 @@ class AboutUsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 30),
             ],
           ),
         ),

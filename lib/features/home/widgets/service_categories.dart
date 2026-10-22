@@ -44,13 +44,7 @@ class ServiceCategories extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Our Services',
-                style: AppTextStyles.title.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
+              Text('Our Services', style: AppTextStyles.sectionHeading),
               GestureDetector(
                 onTap: () => Navigator.push(
                   context,
@@ -59,7 +53,8 @@ class ServiceCategories extends ConsumerWidget {
                 child: const Text(
                   'VIEW ALL',
                   style: TextStyle(
-                    color: AppColors.secondaryGold,
+                    fontFamily: AppTextStyles.bodyFont,
+                    color: AppColors.champagneGold,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
@@ -180,27 +175,19 @@ class _CategoryItem extends StatelessWidget {
             width: 58,
             height: 58,
             decoration: BoxDecoration(
-              color: isAccent ? AppColors.primaryBlack : Colors.white,
+              color: isAccent ? AppColors.deepCharcoal : AppColors.pureWhite,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isAccent
-                    ? AppColors.secondaryGold
-                    : AppColors.borderLight,
+                color: isAccent ? AppColors.champagneGold : AppColors.sandBeige,
                 width: isAccent ? 1.5 : 1,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+              boxShadow: isAccent ? AppColors.goldGlow : AppColors.softShadow,
             ),
             child: Icon(
               icon,
               color: isAccent
-                  ? AppColors.secondaryGold
-                  : AppColors.primaryBlack,
+                  ? AppColors.champagneGold
+                  : AppColors.deepCharcoal,
               size: 24,
             ),
           ),
@@ -210,7 +197,8 @@ class _CategoryItem extends StatelessWidget {
             child: Text(
               label,
               style: AppTextStyles.caption.copyWith(
-                color: AppColors.textPrimary,
+                fontFamily: AppTextStyles.bodyFont,
+                color: AppColors.deepCharcoal,
                 fontWeight: FontWeight.w600,
                 fontSize: 11,
               ),

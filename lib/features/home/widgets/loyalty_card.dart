@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/app_text_styles.dart';
 
 /// Highly configurable, reusable loyalty membership card.
 ///
@@ -52,19 +53,17 @@ class LoyaltyCard extends StatelessWidget {
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
             color: backgroundColor,
-            gradient:
-                cardGradient ??
-                const LinearGradient(
-                  colors: [Color(0xFF1E1E1E), Color(0xFF0D0D0D)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-            borderRadius: BorderRadius.circular(20),
+            gradient: cardGradient ?? AppColors.charcoalGradient,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: AppColors.champagneGold.withValues(alpha: 0.22),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.25),
+                color: AppColors.deepCharcoal.withValues(alpha: 0.25),
                 blurRadius: 18,
-                offset: const Offset(0, 8),
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -90,7 +89,8 @@ class LoyaltyCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: Colors.black,
+                          fontFamily: AppTextStyles.headingFont,
+                          color: AppColors.deepCharcoal,
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.1,
@@ -112,6 +112,7 @@ class LoyaltyCard extends StatelessWidget {
                       child: Text(
                         'Preview Tier',
                         style: TextStyle(
+                          fontFamily: AppTextStyles.bodyFont,
                           color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
@@ -127,7 +128,8 @@ class LoyaltyCard extends StatelessWidget {
               Text(
                 'AVAILABLE BALANCE',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.55),
+                  fontFamily: AppTextStyles.bodyFont,
+                  color: Colors.white.withValues(alpha: 0.6),
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1.4,
@@ -145,9 +147,10 @@ class LoyaltyCard extends StatelessWidget {
                     child: Text(
                       _formattedPoints(pointsBalance),
                       style: const TextStyle(
+                        fontFamily: AppTextStyles.headingFont,
                         color: Colors.white,
-                        fontSize: 38,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
                         height: 1,
                       ),
                     ),
@@ -158,8 +161,9 @@ class LoyaltyCard extends StatelessWidget {
                     child: Text(
                       pointsLabel,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.65),
-                        fontSize: 16,
+                        fontFamily: AppTextStyles.bodyFont,
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 15,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -177,7 +181,8 @@ class LoyaltyCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.6),
+                              fontFamily: AppTextStyles.bodyFont,
+                              color: Colors.white.withValues(alpha: 0.65),
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
@@ -233,7 +238,8 @@ class LoyaltyCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        fontFamily: AppTextStyles.bodyFont,
+                        color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -251,6 +257,7 @@ class LoyaltyCard extends StatelessWidget {
                           child: const Text(
                             'Explore rewards',
                             style: TextStyle(
+                              fontFamily: AppTextStyles.bodyFont,
                               color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.w700,

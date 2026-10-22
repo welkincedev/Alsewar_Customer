@@ -130,9 +130,10 @@ class HomeHeader extends StatelessWidget {
               Text(
                 'Good Day,',
                 style: AppTextStyles.bodySecondary.copyWith(
-                  fontSize: 14,
+                  fontFamily: AppTextStyles.bodyFont,
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textLight,
+                  color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 2),
@@ -143,9 +144,11 @@ class HomeHeader extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.heading.copyWith(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
+                  fontFamily: AppTextStyles.headingFont,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                   letterSpacing: -0.3,
+                  color: AppColors.deepCharcoal,
                 ),
               ),
             ],
@@ -166,18 +169,12 @@ class HomeHeader extends StatelessWidget {
         width: 42,
         height: 42,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.pureWhite,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: AppColors.borderLight),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(color: AppColors.sandBeige),
+          boxShadow: AppColors.softShadow,
         ),
-        child: Icon(icon, size: 21, color: AppColors.textPrimary),
+        child: Icon(icon, size: 21, color: AppColors.deepCharcoal),
       ),
     );
   }

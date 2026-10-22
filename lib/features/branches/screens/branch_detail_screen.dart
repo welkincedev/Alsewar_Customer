@@ -122,6 +122,15 @@ class BranchDetailScreen extends ConsumerWidget {
                             value: branch.phone,
                           ),
                         ],
+                        if (branch.whatsappNumber != null &&
+                            branch.whatsappNumber!.isNotEmpty) ...[
+                          const Divider(height: 16),
+                          _DetailInfoTile(
+                            icon: Icons.chat_bubble_outline,
+                            title: 'WhatsApp',
+                            value: branch.whatsappNumber!,
+                          ),
+                        ],
                         if (branch.email.isNotEmpty) ...[
                           const Divider(height: 16),
                           _DetailInfoTile(

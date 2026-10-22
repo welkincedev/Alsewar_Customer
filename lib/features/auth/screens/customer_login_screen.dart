@@ -23,7 +23,7 @@ class CustomerLoginScreen extends StatelessWidget {
               children: [
                 // App Logo
                 Image.asset(
-                  'assets/logos/AlSewar_logoonly.png',
+                  'assets/logos/AlSewarlogo-nobg.png',
                   width: 140,
                   height: 140,
                   fit: BoxFit.contain,
@@ -32,20 +32,13 @@ class CustomerLoginScreen extends StatelessWidget {
                 ),
                 // const SizedBox(height: 16),
 
-                // Brand Header
-                Text(
-                  'Al Sewar Carwash',
-                  style: AppTextStyles.heading.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 6),
-
                 // Welcome Subtitle
                 Text(
                   'Sign In',
-                  style: AppTextStyles.bodySecondary,
+                  style: AppTextStyles.bodySecondary.copyWith(
+                    fontFamily: AppTextStyles.bodyFont,
+                    color: AppColors.textSecondary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
@@ -54,19 +47,10 @@ class CustomerLoginScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: AppColors.cardLight,
+                    color: AppColors.pureWhite,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: AppColors.borderLight,
-                      width: 0.8,
-                    ),
+                    boxShadow: AppColors.cardShadow,
+                    border: Border.all(color: AppColors.sandBeige, width: 1),
                   ),
                   child: const LoginForm(),
                 ),

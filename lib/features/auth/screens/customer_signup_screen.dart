@@ -38,9 +38,11 @@ class CustomerSignupScreen extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 Text(
-                  'Al Sewar Carwash',
+                  'Al Sewar Auto Center',
                   style: AppTextStyles.heading.copyWith(
+                    fontFamily: AppTextStyles.headingFont,
                     fontWeight: FontWeight.bold,
+                    color: AppColors.deepCharcoal,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -48,7 +50,10 @@ class CustomerSignupScreen extends StatelessWidget {
 
                 Text(
                   'Sign up for customer loyalty rewards',
-                  style: AppTextStyles.bodySecondary,
+                  style: AppTextStyles.bodySecondary.copyWith(
+                    fontFamily: AppTextStyles.bodyFont,
+                    color: AppColors.textSecondary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
@@ -57,19 +62,10 @@ class CustomerSignupScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: AppColors.cardLight,
+                    color: AppColors.pureWhite,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: AppColors.borderLight,
-                      width: 0.8,
-                    ),
+                    boxShadow: AppColors.cardShadow,
+                    border: Border.all(color: AppColors.sandBeige, width: 1),
                   ),
                   child: SignupForm(
                     onSuccess: () {

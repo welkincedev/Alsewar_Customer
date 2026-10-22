@@ -5,6 +5,7 @@ import '../../auth/viewmodels/auth_providers.dart';
 import '../models/branch.dart';
 import '../models/business_hour.dart';
 import '../services/branch_service.dart';
+import '../services/location_service.dart';
 
 /// Provider for BranchApiClient sharing the centralized ApiClient
 final branchApiClientProvider = Provider<ApiClient>((ref) {
@@ -16,6 +17,11 @@ final branchServiceProvider = Provider<BranchService>((ref) {
   final apiClient = ref.watch(branchApiClientProvider);
   final tokenStorage = ref.watch(tokenStorageProvider);
   return BranchService(apiClient: apiClient, tokenStorage: tokenStorage);
+});
+
+/// Provider for LocationService
+final locationServiceProvider = Provider<LocationService>((ref) {
+  return LocationService();
 });
 
 /// Family provider for fetching single branch details

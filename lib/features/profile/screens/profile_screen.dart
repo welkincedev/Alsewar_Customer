@@ -46,7 +46,7 @@ class ProfileScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: AppColors.warmPorcelain,
       appBar: AppBar(
         title: const Text('My Profile'),
         backgroundColor: AppColors.primaryBlack,
@@ -247,15 +247,15 @@ class ProfileScreen extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1F1F1F), Color(0xFF0F0F0F)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppColors.charcoalGradient,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.champagneGold.withValues(alpha: 0.25),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: AppColors.deepCharcoal.withValues(alpha: 0.25),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -278,6 +278,7 @@ class ProfileScreen extends ConsumerWidget {
                     ? user.displayName[0].toUpperCase()
                     : 'C',
                 style: const TextStyle(
+                  fontFamily: AppTextStyles.headingFont,
                   color: AppColors.primaryBlack,
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
@@ -293,6 +294,7 @@ class ProfileScreen extends ConsumerWidget {
                 Text(
                   user.displayName,
                   style: const TextStyle(
+                    fontFamily: AppTextStyles.headingFont,
                     color: Colors.white,
                     fontSize: 19,
                     fontWeight: FontWeight.bold,
@@ -304,6 +306,7 @@ class ProfileScreen extends ConsumerWidget {
                       ? user.email
                       : (user.phone ?? user.username),
                   style: TextStyle(
+                    fontFamily: AppTextStyles.bodyFont,
                     color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 13,
                   ),
@@ -325,7 +328,8 @@ class ProfileScreen extends ConsumerWidget {
                       child: const Text(
                         'GOLD MEMBER',
                         style: TextStyle(
-                          color: Colors.black,
+                          fontFamily: AppTextStyles.headingFont,
+                          color: AppColors.deepCharcoal,
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.8,
@@ -344,6 +348,7 @@ class ProfileScreen extends ConsumerWidget {
                       child: const Text(
                         'Customer Account',
                         style: TextStyle(
+                          fontFamily: AppTextStyles.bodyFont,
                           color: Colors.white70,
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
@@ -366,6 +371,7 @@ class ProfileScreen extends ConsumerWidget {
       child: Text(
         title,
         style: const TextStyle(
+          fontFamily: AppTextStyles.headingFont,
           color: AppColors.textPrimary,
           fontSize: 13,
           fontWeight: FontWeight.w800,
@@ -378,16 +384,10 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildProfileCard(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.pureWhite,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.borderLight),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(children: children),
     );

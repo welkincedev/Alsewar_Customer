@@ -1,5 +1,7 @@
 import 'package:carwashapp/features/branches/models/branch.dart';
 import 'package:carwashapp/features/branches/screens/branch_map_screen.dart';
+import 'package:carwashapp/features/branches/services/location_service.dart';
+import 'package:carwashapp/features/branches/viewmodels/branch_providers.dart';
 import 'package:carwashapp/features/branches/viewmodels/branch_viewmodel.dart';
 import 'package:carwashapp/features/branches/widgets/branch_details_bottom_sheet.dart';
 import 'package:carwashapp/features/support/screens/whatsapp_support_screen.dart';
@@ -7,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
 
 class _FakeBranchListViewModel extends BranchListViewModel {
   final List<Branch>? initialBranches;
@@ -23,6 +26,17 @@ class _FakeBranchListViewModel extends BranchListViewModel {
   }
 }
 
+class _FakeLocationService extends LocationService {
+  final LocationResult result;
+
+  _FakeLocationService({required this.result});
+
+  @override
+  Future<LocationResult> getCurrentLocation() async {
+    return result;
+  }
+}
+
 void main() {
   const testBranchWithCoords = Branch(
     id: 10,
@@ -31,6 +45,7 @@ void main() {
     address: 'Olaya Street, Al Olaya District',
     city: 'Riyadh',
     phone: '+966 50 123 4567',
+    whatsappNumber: '+966509998877',
     email: 'olaya@alsewar.com',
     latitude: 24.7136,
     longitude: 46.6753,
@@ -44,6 +59,7 @@ void main() {
     address: 'Madinah Road',
     city: 'Jeddah',
     phone: '+966 55 987 6543',
+    whatsappNumber: '+966559876543',
     email: 'jeddah@alsewar.com',
     latitude: null,
     longitude: null,
@@ -57,19 +73,27 @@ void main() {
     address: 'King Abdulaziz Road',
     city: 'Dammam',
     phone: '',
+    whatsappNumber: null,
     email: 'dammam@alsewar.com',
     latitude: 26.4207,
     longitude: 50.0888,
     isActive: true,
   );
 
-  Widget createWidget({List<Branch>? branches, Object? error, Widget? child}) {
+  Widget createWidget({
+    List<Branch>? branches,
+    Object? error,
+    LocationService? locationService,
+    Widget? child,
+  }) {
     return ProviderScope(
       overrides: [
         branchListViewModelProvider.overrideWith(
           () =>
               _FakeBranchListViewModel(initialBranches: branches, error: error),
         ),
+        if (locationService != null)
+          locationServiceProvider.overrideWithValue(locationService),
       ],
       child: MaterialApp(home: child ?? const BranchMapScreen()),
     );
@@ -77,7 +101,7 @@ void main() {
 
   group('BranchDetailsBottomSheet Tests', () {
     testWidgets(
-      'displays branch name, full address, contact number, and WhatsApp button',
+      'displays branch name, address, phone, WhatsApp number, email, and side-by-side action buttons',
       (tester) async {
         await tester.pumpWidget(
           MaterialApp(
@@ -101,12 +125,65 @@ void main() {
         // Contact number
         expect(find.text('+966 50 123 4567'), findsOneWidget);
 
-        // Active WhatsApp button
-        expect(find.text('Chat on WhatsApp'), findsOneWidget);
+        // WhatsApp contact row
+        expect(find.text('+966509998877'), findsOneWidget);
+
+        // Email row
+        expect(find.text('olaya@alsewar.com'), findsOneWidget);
+
+        // Side-by-side buttons
+        expect(find.text('WhatsApp'), findsOneWidget);
+        expect(find.text('Get Directions'), findsOneWidget);
       },
     );
 
-    testWidgets('handles branch with empty contact phone gracefully', (
+    testWidgets(
+      'displays dynamic distance label when user location is provided',
+      (tester) async {
+        // User located ~2.4 km away from branch
+        // Riyadh test coords: 24.7136, 46.6753
+        // User coords slightly offset
+        const userLoc = LatLng(24.7300, 46.6850);
+
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: BranchDetailsBottomSheet(
+                branch: testBranchWithCoords,
+                userLocation: userLoc,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Distance label is rendered with "away"
+        expect(find.textContaining('away'), findsOneWidget);
+        expect(find.byIcon(Icons.near_me_outlined), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'hides distance label when user location is null or branch coordinates are missing',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(
+              body: BranchDetailsBottomSheet(
+                branch: testBranchWithoutCoords,
+                userLocation: LatLng(24.7136, 46.6753),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // No distance label when coordinates are missing
+        expect(find.textContaining('away'), findsNothing);
+      },
+    );
+
+    testWidgets('handles branch with missing WhatsApp gracefully', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -126,7 +203,7 @@ void main() {
 
   group('BranchMapScreen Widget Tests (OpenStreetMap / flutter_map)', () {
     testWidgets(
-      'renders interactive FlutterMap, TileLayer, markers and summary pill',
+      'renders FlutterMap, markers, summary pill, and compact My Location button',
       (tester) async {
         await tester.pumpWidget(createWidget(branches: [testBranchWithCoords]));
         await tester.pumpAndSettle();
@@ -141,13 +218,45 @@ void main() {
         expect(find.text('1 Branch Available'), findsOneWidget);
         expect(find.text('Tap marker for details'), findsOneWidget);
 
-        // Floating action buttons (zoom controls + recenter)
+        // Floating action buttons (zoom controls + compact My Location button)
         expect(find.byTooltip('Zoom In'), findsOneWidget);
         expect(find.byTooltip('Zoom Out'), findsOneWidget);
-        expect(find.byTooltip('Fit All Branches'), findsOneWidget);
-        expect(find.byIcon(Icons.center_focus_strong), findsOneWidget);
+        expect(find.byTooltip('My Location'), findsOneWidget);
+        expect(find.byIcon(Icons.my_location), findsOneWidget);
+
+        // Ensure "Fit All Branches" is removed
+        expect(find.byTooltip('Fit All Branches'), findsNothing);
       },
     );
+
+    testWidgets('tapping My Location obtains position and adds user marker', (
+      tester,
+    ) async {
+      final fakeLocationService = _FakeLocationService(
+        result: const LocationResult(
+          status: LocationResultStatus.success,
+          position: LatLng(24.7136, 46.6753),
+        ),
+      );
+
+      await tester.pumpWidget(
+        createWidget(
+          branches: [testBranchWithCoords],
+          locationService: fakeLocationService,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap My Location button
+      await tester.tap(find.byTooltip('My Location'));
+      await tester.pumpAndSettle();
+
+      // User location marker is added to map
+      expect(find.byTooltip('My Location'), findsWidgets);
+
+      // Nearest branch feedback in snackbar
+      expect(find.textContaining('Al Sewar Riyadh Olaya'), findsWidgets);
+    });
 
     testWidgets('filters invalid coordinates and shows valid count', (
       tester,
@@ -157,29 +266,26 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Only 1 branch has valid coordinates, so pill reflects 1 Branch Available
       expect(find.byType(FlutterMap), findsOneWidget);
       expect(find.text('1 Branch Available'), findsOneWidget);
     });
 
     testWidgets(
-      'tapping branch marker opens BranchDetailsBottomSheet with branch details',
+      'tapping branch marker opens BranchDetailsBottomSheet with branch details and actions',
       (tester) async {
         await tester.pumpWidget(createWidget(branches: [testBranchWithCoords]));
         await tester.pumpAndSettle();
 
-        // Marker widget is in MarkerLayer
         final markerFinder = find.byTooltip('Al Sewar Riyadh Olaya');
         expect(markerFinder, findsOneWidget);
 
-        // Tap the marker
         await tester.tap(markerFinder);
         await tester.pumpAndSettle();
 
-        // Verify bottom sheet opened with branch details
         expect(find.byType(BranchDetailsBottomSheet), findsOneWidget);
         expect(find.text('Al Sewar Riyadh Olaya'), findsWidgets);
-        expect(find.text('Chat on WhatsApp'), findsOneWidget);
+        expect(find.text('WhatsApp'), findsOneWidget);
+        expect(find.text('Get Directions'), findsOneWidget);
       },
     );
 
@@ -191,10 +297,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Base FlutterMap at default location is rendered
         expect(find.byType(FlutterMap), findsOneWidget);
-
-        // Warning card for unavailable coordinates
         expect(find.text('Coordinates Unavailable'), findsOneWidget);
         expect(find.text('Al Sewar Jeddah Airport'), findsOneWidget);
         expect(find.text('WhatsApp'), findsOneWidget);

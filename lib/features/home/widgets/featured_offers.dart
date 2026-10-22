@@ -43,13 +43,7 @@ class FeaturedOffers extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Featured Offers',
-                style: AppTextStyles.title.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
+              Text('Featured Offers', style: AppTextStyles.sectionHeading),
               GestureDetector(
                 onTap: () => Navigator.push(
                   context,
@@ -58,7 +52,8 @@ class FeaturedOffers extends StatelessWidget {
                 child: const Text(
                   'VIEW ALL',
                   style: TextStyle(
-                    color: AppColors.secondaryGold,
+                    fontFamily: AppTextStyles.bodyFont,
+                    color: AppColors.champagneGold,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.6,
@@ -93,16 +88,10 @@ class FeaturedOffers extends StatelessWidget {
       width: 270,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.pureWhite,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: AppColors.sandBeige),
+        boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,13 +103,14 @@ class FeaturedOffers extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryBlack,
+                  color: AppColors.deepCharcoal,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   item.tag,
                   style: const TextStyle(
-                    color: AppColors.secondaryGold,
+                    fontFamily: AppTextStyles.headingFont,
+                    color: AppColors.champagneGold,
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.8,
@@ -132,7 +122,8 @@ class FeaturedOffers extends StatelessWidget {
                 child: Text(
                   item.savingText,
                   style: const TextStyle(
-                    color: AppColors.success,
+                    fontFamily: AppTextStyles.bodyFont,
+                    color: AppColors.champagneGold,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
@@ -146,9 +137,9 @@ class FeaturedOffers extends StatelessWidget {
             children: [
               Text(
                 item.title,
-                style: AppTextStyles.bodyPrimary.copyWith(
-                  fontWeight: FontWeight.bold,
+                style: AppTextStyles.cardTitle.copyWith(
                   fontSize: 14,
+                  color: AppColors.deepCharcoal,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -156,9 +147,9 @@ class FeaturedOffers extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 item.description,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.textLight,
-                  fontSize: 11,
+                style: AppTextStyles.supporting.copyWith(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
                   height: 1.3,
                 ),
                 maxLines: 2,
@@ -176,7 +167,8 @@ class FeaturedOffers extends StatelessWidget {
                 Text(
                   'Explore package',
                   style: TextStyle(
-                    color: AppColors.secondaryGold,
+                    fontFamily: AppTextStyles.bodyFont,
+                    color: AppColors.champagneGold,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -185,7 +177,7 @@ class FeaturedOffers extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward,
                   size: 12,
-                  color: AppColors.secondaryGold,
+                  color: AppColors.champagneGold,
                 ),
               ],
             ),

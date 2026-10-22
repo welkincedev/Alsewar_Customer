@@ -1,36 +1,41 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:carwashapp/features/branches/models/branch.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Branch Model Tests', () {
-    test('fromJson correctly parses complete Branch data', () {
-      final json = {
-        'id': 1,
-        'name': 'Main Branch',
-        'code': 'BR001',
-        'address': '123 Main Street',
-        'city': 'Dubai',
-        'phone': '+97140000000',
-        'email': 'main@alsewar.com',
-        'latitude': 25.2048,
-        'longitude': 55.2708,
-        'is_active': true,
-      };
+    test(
+      'fromJson correctly parses complete Branch data with whatsapp_number',
+      () {
+        final json = {
+          'id': 1,
+          'name': 'Muscat Grand Centre',
+          'code': 'MCT-01',
+          'address': 'Sultan Qaboos St, Building 10',
+          'city': 'Muscat',
+          'phone': '+96824123456',
+          'whatsapp_number': '+96891234567',
+          'email': 'muscat@alsewar.com',
+          'latitude': '23.5880310',
+          'longitude': '58.3829150',
+          'is_active': true,
+        };
 
-      final branch = Branch.fromJson(json);
+        final branch = Branch.fromJson(json);
 
-      expect(branch.id, 1);
-      expect(branch.name, 'Main Branch');
-      expect(branch.code, 'BR001');
-      expect(branch.address, '123 Main Street');
-      expect(branch.city, 'Dubai');
-      expect(branch.phone, '+97140000000');
-      expect(branch.email, 'main@alsewar.com');
-      expect(branch.latitude, 25.2048);
-      expect(branch.longitude, 55.2708);
-      expect(branch.isActive, true);
-      expect(branch.fullAddress, '123 Main Street, Dubai');
-    });
+        expect(branch.id, 1);
+        expect(branch.name, 'Muscat Grand Centre');
+        expect(branch.code, 'MCT-01');
+        expect(branch.address, 'Sultan Qaboos St, Building 10');
+        expect(branch.city, 'Muscat');
+        expect(branch.phone, '+96824123456');
+        expect(branch.whatsappNumber, '+96891234567');
+        expect(branch.email, 'muscat@alsewar.com');
+        expect(branch.latitude, closeTo(23.588031, 0.0001));
+        expect(branch.longitude, closeTo(58.382915, 0.0001));
+        expect(branch.isActive, true);
+        expect(branch.fullAddress, 'Sultan Qaboos St, Building 10, Muscat');
+      },
+    );
 
     test(
       'fromJson handles null coordinates and missing optional fields safely',
@@ -45,6 +50,7 @@ void main() {
           'email': '',
           'latitude': null,
           'longitude': null,
+          'whatsapp_number': null,
         };
 
         final branch = Branch.fromJson(json);
@@ -52,11 +58,12 @@ void main() {
         expect(branch.id, 2);
         expect(branch.latitude, isNull);
         expect(branch.longitude, isNull);
+        expect(branch.whatsappNumber, isNull);
         expect(branch.isActive, true);
       },
     );
 
-    test('toJson produces valid Map structure', () {
+    test('toJson produces valid Map structure with whatsapp_number', () {
       const branch = Branch(
         id: 3,
         name: 'Sharjah Branch',
@@ -64,6 +71,7 @@ void main() {
         address: 'Al Majaz',
         city: 'Sharjah',
         phone: '065000000',
+        whatsappNumber: '+971500000000',
         email: 'sharjah@alsewar.com',
         latitude: 25.3463,
         longitude: 55.4209,
@@ -75,7 +83,31 @@ void main() {
       expect(json['id'], 3);
       expect(json['name'], 'Sharjah Branch');
       expect(json['city'], 'Sharjah');
+      expect(json['phone'], '065000000');
+      expect(json['whatsapp_number'], '+971500000000');
       expect(json['is_active'], false);
+    });
+
+    test('copyWith creates clone with updated fields', () {
+      const original = Branch(
+        id: 4,
+        name: 'Original Branch',
+        code: 'ORG01',
+        address: 'Main St',
+        city: 'Riyadh',
+        phone: '123',
+        email: 'orig@alsewar.com',
+      );
+
+      final updated = original.copyWith(
+        whatsappNumber: '+966509999999',
+        name: 'Updated Branch',
+      );
+
+      expect(updated.id, 4);
+      expect(updated.name, 'Updated Branch');
+      expect(updated.whatsappNumber, '+966509999999');
+      expect(updated.city, 'Riyadh');
     });
   });
 }

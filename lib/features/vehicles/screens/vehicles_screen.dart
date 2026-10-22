@@ -395,11 +395,7 @@ class _VehicleCard extends StatelessWidget {
       width: 72,
       height: 72,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primaryBlack, Color(0xFF262626)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppColors.charcoalGradient,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppColors.secondaryGold.withValues(alpha: 0.3),
