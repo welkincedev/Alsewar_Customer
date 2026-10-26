@@ -156,6 +156,7 @@ class FloatingPillNavBar extends StatelessWidget {
                                 splashColor: accentColor.withValues(
                                   alpha: 0.15,
                                 ),
+                                splashFactory: InkRipple.splashFactory,
                                 highlightColor: Colors.transparent,
                                 child: _NavItemContent(
                                   item: item,

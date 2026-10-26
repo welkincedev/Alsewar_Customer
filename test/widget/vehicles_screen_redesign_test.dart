@@ -135,7 +135,10 @@ void main() {
           () => _FakeVisitViewModel(initialVisits: visits),
         ),
       ],
-      child: const MaterialApp(home: VehiclesScreen()),
+      child: MaterialApp(
+        theme: ThemeData(splashFactory: InkRipple.splashFactory),
+        home: const VehiclesScreen(),
+      ),
     );
   }
 

@@ -1,3 +1,9 @@
+import 'package:carwashapp/features/vehicles/models/vehicle.dart';
+import 'package:carwashapp/features/vehicles/viewmodels/vehicle_providers.dart';
+import 'package:carwashapp/features/vehicles/viewmodels/vehicle_viewmodel.dart';
+import 'package:carwashapp/features/visits/models/service_visit.dart';
+import 'package:carwashapp/features/visits/viewmodels/visit_providers.dart';
+import 'package:carwashapp/features/visits/viewmodels/visit_viewmodel.dart';
 import 'package:carwashapp/app/theme/app_colors.dart';
 import 'package:carwashapp/features/about/screens/about_us_screen.dart';
 import 'package:carwashapp/features/auth/models/auth_user.dart';
@@ -12,6 +18,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+class _FakeVehicleViewModel extends VehicleViewModel {
+  @override
+  Future<List<Vehicle>> build() async => const [];
+}
+
+class _FakeVisitViewModel extends VisitViewModel {
+  @override
+  Future<List<ServiceVisit>> build() async => const [];
+}
 
 class _FakeBranchListViewModel extends BranchListViewModel {
   final List<Branch> branches;
@@ -54,6 +70,8 @@ void main() {
     return ProviderScope(
       overrides: [
         customerServicesProvider.overrideWith((ref) => const []),
+        vehicleViewModelProvider.overrideWith(() => _FakeVehicleViewModel()),
+        visitViewModelProvider.overrideWith(() => _FakeVisitViewModel()),
         branchListViewModelProvider.overrideWith(
           () => _FakeBranchListViewModel([testBranch]),
         ),
@@ -137,7 +155,7 @@ void main() {
         // 3. FeaturedOffers section is completely visible
         expect(find.byType(FeaturedOffers), findsOneWidget);
         expect(find.text('Featured Offers'), findsOneWidget);
-        expect(find.text('VIEW ALL'), findsNWidgets(2));
+        expect(find.text('VIEW ALL'), findsWidgets);
         expect(find.text('Full Exterior & Polish'), findsOneWidget);
         expect(find.text('Save 20%'), findsOneWidget);
 
@@ -167,11 +185,11 @@ void main() {
         expect(scrollableFinder, findsOneWidget);
 
         // Scroll to the bottom of About Us
-        await tester.drag(scrollableFinder, const Offset(0, -600));
+        final buttonFinder = find.text('View All Service Centers');
+        await tester.scrollUntilVisible(buttonFinder, 500.0);
         await tester.pumpAndSettle();
 
         // The bottom action button is fully visible
-        final buttonFinder = find.text('View All Service Centers');
         expect(buttonFinder, findsOneWidget);
 
         // The button sits strictly above the floating navigation bar

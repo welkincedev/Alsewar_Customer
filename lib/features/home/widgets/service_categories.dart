@@ -64,7 +64,7 @@ class ServiceCategories extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 12),
 
         // ── Categories Row ──────────────────────────────────────────
         Padding(
@@ -172,11 +172,11 @@ class _CategoryItem extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 58,
-            height: 58,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
               color: isAccent ? AppColors.deepCharcoal : AppColors.pureWhite,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isAccent ? AppColors.champagneGold : AppColors.sandBeige,
                 width: isAccent ? 1.5 : 1,
@@ -188,10 +188,10 @@ class _CategoryItem extends StatelessWidget {
               color: isAccent
                   ? AppColors.champagneGold
                   : AppColors.deepCharcoal,
-              size: 24,
+              size: 22,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Text(

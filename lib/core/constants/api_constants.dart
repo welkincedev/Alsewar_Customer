@@ -40,7 +40,7 @@ class ApiConstants {
 
   // ─── SUPPORT & CONTACT CONFIGURATION ───────────────────────
   /// Configurable WhatsApp support number (International format, e.g. '+966500000000').
-  /// Leave empty if pending official configuration from Al Sewar administration.
+  /// Leave empty if pending official configuration from Al-Sewar administration.
   static const String whatsappSupportNumber = '';
   static const String supportPhone = '+966 50 000 0000';
   static const String supportEmail = 'support@alsewarcarwash.com';

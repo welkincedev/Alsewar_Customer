@@ -6,6 +6,7 @@ import 'package:carwashapp/features/branches/screens/branch_map_screen.dart';
 import 'package:carwashapp/features/home/screens/customer_home_screen.dart';
 import 'package:carwashapp/features/home/views/home_screen.dart';
 import 'package:carwashapp/features/home/widgets/loyalty_card.dart';
+import 'package:carwashapp/features/home/widgets/membership_details_bottom_sheet.dart';
 import 'package:carwashapp/features/profile/screens/profile_screen.dart';
 import 'package:carwashapp/features/services/screens/services_screen.dart';
 import 'package:carwashapp/features/vehicles/models/vehicle_request.dart';
@@ -37,26 +38,26 @@ void main() {
   });
 
   group('PreviewMockData Integrity & Clearly Identified Mock Values', () {
-    test(
-      'sample customer profile has valid customer role and preview indicator',
-      () {
-        final customer = PreviewMockData.sampleCustomer;
-        expect(customer.id, equals(999));
-        expect(customer.role, equals('CUSTOMER'));
-        expect(customer.isActive, isTrue);
-        expect(customer.lastName, contains('[Preview]'));
-        expect(customer.email, contains('.dev'));
-        expect(customer.displayName, contains('Ahmed'));
-      },
-    );
+    test('sample customer profile has valid customer role, Gold tier and preview indicator', () {
+      final customer = PreviewMockData.sampleCustomer;
+      expect(customer.id, equals(999));
+      expect(customer.role, equals('CUSTOMER'));
+      expect(customer.isActive, isTrue);
+      expect(customer.lastName, contains('#'));
+      expect(customer.email, contains('.dev'));
+      expect(customer.displayName, contains('Ahmed'));
+      expect(customer.loyaltyPoints, equals(30000));
+      expect(customer.membershipTier, equals('GOLD'));
+      expect(customer.membershipId, equals('AS-88301'));
+    });
 
     test('sample vehicles have preview markers and correct attributes', () {
       final vehicles = PreviewMockData.sampleVehicles;
       expect(vehicles.length, equals(3));
 
-      // Each vehicle is clearly marked with [Preview]
+      // Each vehicle is clearly marked with #
       for (final v in vehicles) {
-        expect(v.model, contains('[Preview]'));
+        expect(v.model, contains('#'));
         expect(v.plateNumber, startsWith('PRV '));
       }
 
@@ -93,7 +94,7 @@ void main() {
       final services = PreviewMockData.sampleServices;
       expect(services.length, greaterThanOrEqualTo(4));
       for (final s in services) {
-        expect(s.name, contains('[Preview]'));
+        expect(s.name, contains('#'));
         expect(s.description.isNotEmpty, isTrue);
       }
     });
@@ -102,7 +103,7 @@ void main() {
       final branches = PreviewMockData.sampleBranches;
       expect(branches.length, equals(3));
       for (final b in branches) {
-        expect(b.name, contains('[Preview]'));
+        expect(b.name, contains('#'));
         expect(b.latitude, isNotNull);
         expect(b.longitude, isNotNull);
         expect(b.phone, isNotEmpty);
@@ -133,13 +134,53 @@ void main() {
         // 3. Customer greeting displays preview member
         expect(find.textContaining('Ahmed'), findsWidgets);
 
-        // 4. Loyalty Card displays member info
+        // 4. Loyalty Card displays preview Gold member info
         expect(find.byType(LoyaltyCard), findsOneWidget);
-        expect(
-          find.textContaining('Ahmed Al-Mansoor [Preview]'),
-          findsNWidgets(2),
+        expect(find.textContaining('Ahmed Al-Mansoor #'), findsNWidgets(2));
+        expect(find.text('30,000'), findsOneWidget);
+        expect(find.text('GOLD MEMBER'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Tapping Gold LoyaltyCard in preview mode opens MembershipDetailsBottomSheet with 30,000 pts and Platinum target',
+      (tester) async {
+        PreviewConfig.enable();
+
+        await tester.pumpWidget(
+          ProviderScope(overrides: previewOverrides, child: const CarWashApp()),
         );
-        expect(find.text('2,450'), findsOneWidget);
+        await tester.pumpAndSettle();
+
+        // 1. Verify Gold member hero card is visible
+        expect(find.byType(LoyaltyCard), findsOneWidget);
+        expect(find.text('30,000'), findsOneWidget);
+        expect(find.text('GOLD MEMBER'), findsOneWidget);
+
+        // 2. Tap LoyaltyCard to open details bottom sheet
+        await tester.tap(find.byType(LoyaltyCard));
+        await tester.pumpAndSettle();
+
+        // 3. Verify Membership Details sheet contents
+        expect(find.byType(MembershipDetailsBottomSheet), findsOneWidget);
+        expect(find.text('Membership Details'), findsOneWidget);
+        expect(find.text('Next Tier: Platinum'), findsOneWidget);
+        expect(
+          find.text('50,001'),
+          findsOneWidget,
+        ); // Required points for Platinum
+        expect(find.text('20,001'), findsOneWidget); // Points remaining
+        expect(
+          find.textContaining('20,001 more points to unlock Platinum'),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(MembershipDetailsBottomSheet),
+            matching: find.text('ID: AS-88301'),
+          ),
+          findsOneWidget,
+        );
       },
     );
 
@@ -161,10 +202,10 @@ void main() {
         expect(find.text('PRV 202'), findsOneWidget);
         expect(find.text('PRV 303'), findsOneWidget);
 
-        // 2. Models with [Preview] tags are rendered
-        expect(find.textContaining('S 500 [Preview]'), findsOneWidget);
-        expect(find.textContaining('Cayenne GTS [Preview]'), findsOneWidget);
-        expect(find.textContaining('LX 600 [Preview]'), findsOneWidget);
+        // 2. Models with # tags are rendered
+        expect(find.textContaining('S 500 #'), findsOneWidget);
+        expect(find.textContaining('Cayenne GTS #'), findsOneWidget);
+        expect(find.textContaining('LX 600 #'), findsOneWidget);
 
         // 3. Vehicle 101 shows recent service date from Visit 3 (Oct 20, 2026)
         expect(find.textContaining('20 Oct 2026'), findsOneWidget);
@@ -213,7 +254,7 @@ void main() {
       );
       expect(updatedVehicles.length, equals(4));
       expect(updatedVehicles.last.plateNumber, equals('PRV 404'));
-      expect(updatedVehicles.last.model, contains('RS e-tron GT [Preview]'));
+      expect(updatedVehicles.last.model, contains('RS e-tron GT #'));
     });
 
     testWidgets('ServicesScreen renders catalogue in preview mode', (
@@ -229,12 +270,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Executive Hydro-Wash [Preview]'), findsOneWidget);
-      expect(find.text('Ceramic Shield Detailing [Preview]'), findsOneWidget);
-      expect(
-        find.text('Interior Ozone Sanitization [Preview]'),
-        findsOneWidget,
-      );
+      expect(find.text('Executive Hydro-Wash #'), findsOneWidget);
+      expect(find.text('Ceramic Shield Detailing #'), findsOneWidget);
+      expect(find.text('Interior Ozone Sanitization #'), findsOneWidget);
     });
 
     testWidgets('VisitsScreen renders service history in preview mode', (
@@ -271,8 +309,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('PRV-VISIT-2026-001'), findsOneWidget);
-        expect(find.text('Executive Hydro-Wash [Preview]'), findsOneWidget);
-        expect(find.text('Ceramic Shield Detailing [Preview]'), findsOneWidget);
+        expect(find.text('Executive Hydro-Wash #'), findsOneWidget);
+        expect(find.text('Ceramic Shield Detailing #'), findsOneWidget);
         expect(find.text('Checked In'), findsOneWidget);
       },
     );
@@ -292,10 +330,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(
-          find.textContaining('Ahmed Al-Mansoor [Preview]'),
-          findsNWidgets(2),
-        );
+        expect(find.textContaining('Ahmed Al-Mansoor #'), findsNWidgets(2));
         expect(
           find.textContaining('preview.customer@alsewar.dev'),
           findsNWidgets(2),

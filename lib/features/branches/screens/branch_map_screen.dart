@@ -28,15 +28,37 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
   final MapController _mapController = MapController();
   Branch? _selectedBranch;
   bool _hasInitialFitted = false;
+  bool _isMapReady = false;
   bool _hasTileError = false;
 
   LatLng? _currentLocation;
   bool _isLocating = false;
 
+  int? _lastNearestBranchId;
+  DateTime? _lastSnackbarShownTime;
+
   @override
   void dispose() {
     _mapController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // When the screen becomes active or visible (e.g. in IndexedStack / tab switch)
+    if (_isMapReady) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final size = _mapController.camera.nonRotatedSize;
+        if (size.width > 0 && size.height > 0) {
+          _mapController.move(
+            _mapController.camera.center,
+            _mapController.camera.zoom,
+          );
+        }
+      });
+    }
   }
 
   Future<void> _refreshAll() async {
@@ -45,6 +67,24 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
       _hasTileError = false;
     });
     await ref.read(branchListViewModelProvider.notifier).refresh();
+  }
+
+  void _tryFitCamera(List<Branch> validBranches) {
+    if (!_isMapReady || validBranches.isEmpty) return;
+
+    final size = _mapController.camera.nonRotatedSize;
+    if (size.width <= 0 || size.height <= 0) {
+      // Dimensions not measured yet (e.g. offstage or pre-layout), wait for layout
+      return;
+    }
+
+    _hasInitialFitted = true;
+    _fitCameraToBounds(validBranches);
+    // Explicitly nudge camera to trigger immediate TileLayer calculation & rendering
+    _mapController.move(
+      _mapController.camera.center,
+      _mapController.camera.zoom,
+    );
   }
 
   void _fitCameraToBounds(List<Branch> validBranches) {
@@ -56,11 +96,13 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
     } else {
       final bounds = CoordinateUtils.computeBounds(validBranches);
       if (bounds != null) {
-        final bottomCameraPadding =
-            FloatingPillNavBarUtils.calculateBottomClearance(
-              context,
-              clearance: 36.0,
-            );
+        final isStandalone = Navigator.canPop(context);
+        final bottomCameraPadding = isStandalone
+            ? (MediaQuery.paddingOf(context).bottom + 24.0)
+            : FloatingPillNavBarUtils.calculateBottomClearance(
+                context,
+                clearance: 20.0,
+              );
         _mapController.fitCamera(
           CameraFit.bounds(
             bounds: bounds,
@@ -107,27 +149,76 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
               pos,
             );
 
+            final now = DateTime.now();
+            final isDuplicate =
+                _lastNearestBranchId == nearest.id &&
+                _lastSnackbarShownTime != null &&
+                now.difference(_lastSnackbarShownTime!) <
+                    const Duration(milliseconds: 2500);
+
+            if (!isDuplicate) {
+              _lastNearestBranchId = nearest.id;
+              _lastSnackbarShownTime = now;
+
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  behavior: SnackBarBehavior.floating,
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(
+                      color: AppColors.champagneGold,
+                      width: 1.0,
+                    ),
+                  ),
+                  content: Text(
+                    distStr != null
+                        ? 'Located! Nearest branch: ${nearest.name} ($distStr)'
+                        : 'Located! Nearest branch: ${nearest.name}',
+                    style: const TextStyle(
+                      color: AppColors.pureWhite,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  backgroundColor: AppColors.deepBlack,
+                  duration: const Duration(milliseconds: 2500),
+                  action: SnackBarAction(
+                    label: 'View',
+                    textColor: AppColors.signatureGold,
+                    onPressed: () => _handleBranchSelected(nearest),
+                  ),
+                ),
+              );
+            }
+          } else {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  distStr != null
-                      ? 'Located! Nearest branch: ${nearest.name} ($distStr)'
-                      : 'Located! Nearest branch: ${nearest.name}',
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
-                backgroundColor: AppColors.primaryBlack,
-                duration: const Duration(seconds: 4),
-                action: SnackBarAction(
-                  label: 'View',
-                  textColor: AppColors.secondaryGold,
-                  onPressed: () => _handleBranchSelected(nearest),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(
+                    color: AppColors.champagneGold,
+                    width: 1.0,
+                  ),
                 ),
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Position updated. No nearby branches found.'),
-                backgroundColor: AppColors.primaryBlack,
+                content: const Text(
+                  'Position updated. No nearby branches found.',
+                  style: TextStyle(
+                    color: AppColors.pureWhite,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                backgroundColor: AppColors.deepBlack,
+                duration: const Duration(milliseconds: 2500),
               ),
             );
           }
@@ -143,15 +234,23 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
           break;
 
         case LocationResultStatus.permissionDenied:
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               content: Text(
                 result.errorMessage ?? 'Location permission was denied. Please allow access to find nearby branches.',
+                style: const TextStyle(color: AppColors.pureWhite),
               ),
               backgroundColor: AppColors.warning,
+              duration: const Duration(milliseconds: 2500),
               action: SnackBarAction(
                 label: 'Retry',
-                textColor: AppColors.primaryBlack,
+                textColor: AppColors.deepBlack,
                 onPressed: () => _handleMyLocation(validBranches),
               ),
             ),
@@ -169,15 +268,23 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
 
         case LocationResultStatus.gpsUnavailable:
         case LocationResultStatus.error:
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               content: Text(
                 result.errorMessage ?? 'Unable to determine your GPS location. Please check your signal and try again.',
+                style: const TextStyle(color: AppColors.pureWhite),
               ),
               backgroundColor: AppColors.error,
+              duration: const Duration(milliseconds: 2500),
               action: SnackBarAction(
                 label: 'Retry',
-                textColor: Colors.white,
+                textColor: AppColors.pureWhite,
                 onPressed: () => _handleMyLocation(validBranches),
               ),
             ),
@@ -357,9 +464,15 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Branch Locations'),
-        backgroundColor: AppColors.primaryBlack,
-        foregroundColor: AppColors.secondaryGold,
+        title: const Text(
+          'Branch Locations',
+          style: TextStyle(
+            color: AppColors.pureWhite,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: AppColors.deepBlack,
+        foregroundColor: AppColors.champagneGold,
         elevation: 0,
         actions: [
           IconButton(
@@ -374,7 +487,7 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(color: AppColors.secondaryGold),
+              CircularProgressIndicator(color: AppColors.signatureGold),
               SizedBox(height: 16),
               Text(
                 'Locating Al Sewar Branches...',
@@ -405,15 +518,19 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
                 const SizedBox(height: 24),
                 FilledButton.icon(
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlack,
+                    backgroundColor: AppColors.deepBlack,
+                    foregroundColor: AppColors.signatureGold,
                   ),
                   icon: const Icon(
                     Icons.refresh,
-                    color: AppColors.secondaryGold,
+                    color: AppColors.signatureGold,
                   ),
                   label: const Text(
                     'Try Again',
-                    style: TextStyle(color: AppColors.secondaryGold),
+                    style: TextStyle(
+                      color: AppColors.signatureGold,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   onPressed: _refreshAll,
                 ),
@@ -432,7 +549,7 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
                     const Icon(
                       Icons.storefront_outlined,
                       size: 72,
-                      color: AppColors.secondaryGold,
+                      color: AppColors.champagneGold,
                     ),
                     const SizedBox(height: 20),
                     Text('No Branches Found', style: AppTextStyles.heading),
@@ -445,15 +562,19 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
                     const SizedBox(height: 24),
                     FilledButton.icon(
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primaryBlack,
+                        backgroundColor: AppColors.deepBlack,
+                        foregroundColor: AppColors.signatureGold,
                       ),
                       icon: const Icon(
                         Icons.refresh,
-                        color: AppColors.secondaryGold,
+                        color: AppColors.signatureGold,
                       ),
                       label: const Text(
                         'Refresh',
-                        style: TextStyle(color: AppColors.secondaryGold),
+                        style: TextStyle(
+                          color: AppColors.signatureGold,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       onPressed: _refreshAll,
                     ),
@@ -501,272 +622,368 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
       );
     }
 
-    return Stack(
-      children: [
-        // Interactive OpenStreetMap using flutter_map
-        FlutterMap(
-          mapController: _mapController,
-          options: MapOptions(
-            initialCenter: initialTarget,
-            initialZoom: CoordinateUtils.defaultZoom,
-            minZoom: 3.0,
-            maxZoom: 18.0,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.all,
-            ),
-            onMapReady: () {
-              if (!_hasInitialFitted) {
-                _hasInitialFitted = true;
-                _fitCameraToBounds(validBranches);
-              }
-            },
-          ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 0 &&
+            constraints.maxHeight > 0 &&
+            _isMapReady &&
+            !_hasInitialFitted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _tryFitCamera(validBranches);
+            }
+          });
+        }
+
+        final isStandalone = Navigator.canPop(context);
+        final bottomOffset = isStandalone
+            ? (MediaQuery.paddingOf(context).bottom + 16.0)
+            : FloatingPillNavBarUtils.calculateControlsBottomOffset(
+                context,
+                clearance: 12.0,
+              );
+
+        return Stack(
           children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.example.carwashapp',
-              maxZoom: 19,
-              errorTileCallback: (tile, error, stackTrace) {
-                if (!_hasTileError && mounted) {
-                  setState(() => _hasTileError = true);
-                }
-              },
-            ),
-            MarkerLayer(markers: _buildMarkers(validBranches)),
-            RichAttributionWidget(
-              alignment: AttributionAlignment.bottomLeft,
-              animationConfig: const ScaleRAWA(),
-              attributions: [
-                TextSourceAttribution(
-                  'OpenStreetMap contributors',
-                  onTap: () async {
-                    final uri = Uri.parse(
-                      'https://openstreetmap.org/copyright',
-                    );
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(
-                        uri,
-                        mode: LaunchMode.externalApplication,
-                      );
+            // Interactive OpenStreetMap using flutter_map
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: initialTarget,
+                initialZoom: CoordinateUtils.defaultZoom,
+                minZoom: 3.0,
+                maxZoom: 18.0,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all,
+                ),
+                onMapReady: () {
+                  _isMapReady = true;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _tryFitCamera(validBranches);
+                    }
+                  });
+                },
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.carwashapp',
+                  maxZoom: 19,
+                  errorTileCallback: (tile, error, stackTrace) {
+                    if (!_hasTileError && mounted) {
+                      setState(() => _hasTileError = true);
                     }
                   },
                 ),
-              ],
-            ),
-          ],
-        ),
-
-        // Floating Header: Branch Count & Nearest Summary
-        Positioned(
-          top: 16,
-          left: 16,
-          right: 16,
-          child: SafeArea(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.primaryBlack.withValues(alpha: 0.90),
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-                border: Border.all(
-                  color: AppColors.secondaryGold.withValues(alpha: 0.4),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: AppColors.secondaryGold,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.storefront,
-                      size: 16,
-                      color: AppColors.primaryBlack,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${validBranches.length} ${validBranches.length == 1 ? "Branch Available" : "Branches Available"}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (nearestBranch != null && nearestDistance != null)
-                          Text(
-                            'Nearest: ${nearestBranch.name} ($nearestDistance)',
-                            style: const TextStyle(
-                              color: AppColors.secondaryGold,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (nearestBranch != null)
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
-                      onPressed: () => _handleBranchSelected(nearestBranch!),
-                      child: const Text(
-                        'View Nearest',
-                        style: TextStyle(
-                          color: AppColors.secondaryGold,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    )
-                  else
-                    const Text(
-                      'Tap marker for details',
-                      style: TextStyle(
-                        color: AppColors.secondaryGold,
-                        fontSize: 11,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        // Tile loading warning notice (if offline or tiles slow)
-        if (_hasTileError)
-          Positioned(
-            top: 76,
-            left: 16,
-            right: 16,
-            child: SafeArea(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBlack.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: AppColors.warning.withValues(alpha: 0.8),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.cloud_queue,
-                      size: 16,
-                      color: AppColors.warning,
-                    ),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'We are coming soon',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.close,
-                        size: 16,
-                        color: Colors.white70,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => setState(() => _hasTileError = false),
+                MarkerLayer(markers: _buildMarkers(validBranches)),
+                RichAttributionWidget(
+                  alignment: AttributionAlignment.bottomLeft,
+                  animationConfig: const ScaleRAWA(),
+                  attributions: [
+                    TextSourceAttribution(
+                      'OpenStreetMap contributors',
+                      onTap: () async {
+                        final uri = Uri.parse(
+                          'https://openstreetmap.org/copyright',
+                        );
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(
+                            uri,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        }
+                      },
                     ),
                   ],
                 ),
+              ],
+            ),
+
+            // Floating Header: Branch Count & Nearest Summary
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: SafeArea(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 11,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.deepBlack,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: AppColors.champagneGold,
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: AppColors.champagneGold.withValues(
+                            alpha: 0.16,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.champagneGold.withValues(
+                              alpha: 0.35,
+                            ),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.storefront,
+                          size: 18,
+                          color: AppColors.signatureGold,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${validBranches.length} ${validBranches.length == 1 ? "Branch Available" : "Branches Available"}',
+                              style: const TextStyle(
+                                color: AppColors.pureWhite,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                letterSpacing: 0.2,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            if (nearestBranch != null &&
+                                nearestDistance != null)
+                              Text(
+                                'Nearest: ${nearestBranch.name} ($nearestDistance)',
+                                style: const TextStyle(
+                                  color: AppColors.signatureGold,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              )
+                            else
+                              const Text(
+                                'Tap marker for details',
+                                style: TextStyle(
+                                  color: AppColors.textLight,
+                                  fontSize: 11,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                          ],
+                        ),
+                      ),
+                      if (nearestBranch != null)
+                        TextButton(
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            backgroundColor: AppColors.champagneGold.withValues(
+                              alpha: 0.16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(
+                                color: AppColors.champagneGold.withValues(
+                                  alpha: 0.35,
+                                ),
+                                width: 1.0,
+                              ),
+                            ),
+                          ),
+                          onPressed: () =>
+                              _handleBranchSelected(nearestBranch!),
+                          child: const Text(
+                            'View Nearest',
+                            style: TextStyle(
+                              color: AppColors.signatureGold,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
 
-        // Floating Action Buttons: Zoom Controls & Compact Current Location
-        Positioned(
-          bottom: FloatingPillNavBarUtils.calculateControlsBottomOffset(
-            context,
-            clearance: 16.0,
-          ),
-          right: 16,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FloatingActionButton.small(
-                heroTag: 'osm_zoom_in_btn',
-                backgroundColor: AppColors.primaryBlack,
-                foregroundColor: AppColors.secondaryGold,
-                tooltip: 'Zoom In',
-                onPressed: () {
-                  final currentZoom = _mapController.camera.zoom;
-                  _mapController.move(
-                    _mapController.camera.center,
-                    currentZoom + 1.0,
-                  );
-                },
-                child: const Icon(Icons.add),
-              ),
-              const SizedBox(height: 8),
-              FloatingActionButton.small(
-                heroTag: 'osm_zoom_out_btn',
-                backgroundColor: AppColors.primaryBlack,
-                foregroundColor: AppColors.secondaryGold,
-                tooltip: 'Zoom Out',
-                onPressed: () {
-                  final currentZoom = _mapController.camera.zoom;
-                  _mapController.move(
-                    _mapController.camera.center,
-                    currentZoom - 1.0,
-                  );
-                },
-                child: const Icon(Icons.remove),
-              ),
-              const SizedBox(height: 8),
-              // Compact Current-Location Button (replaces Show All Branches button)
-              FloatingActionButton(
-                heroTag: 'osm_my_location_btn',
-                backgroundColor: AppColors.primaryBlack,
-                foregroundColor: AppColors.secondaryGold,
-                elevation: 4,
-                tooltip: 'My Location',
-                onPressed: () => _handleMyLocation(validBranches),
-                child: _isLocating
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.5,
-                          color: AppColors.secondaryGold,
+            // Tile loading warning notice (if offline or tiles slow)
+            if (_hasTileError)
+              Positioned(
+                top: 76,
+                left: 16,
+                right: 16,
+                child: SafeArea(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.deepBlack.withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.warning.withValues(alpha: 0.8),
+                        width: 1.0,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.25),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                      )
-                    : const Icon(Icons.my_location),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.cloud_queue,
+                          size: 16,
+                          color: AppColors.warning,
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'We are coming soon',
+                            style: TextStyle(
+                              color: AppColors.pureWhite,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.white70,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () =>
+                              setState(() => _hasTileError = false),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ],
-          ),
-        ),
-      ],
+
+            // Floating Action Buttons: Zoom Controls & Compact Current Location
+            Positioned(
+              bottom: bottomOffset,
+              right: 16,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FloatingActionButton.small(
+                    heroTag: 'osm_zoom_in_btn',
+                    backgroundColor: AppColors.deepBlack,
+                    foregroundColor: AppColors.champagneGold,
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: AppColors.champagneGold.withValues(alpha: 0.35),
+                        width: 1.0,
+                      ),
+                    ),
+                    tooltip: 'Zoom In',
+                    onPressed: () {
+                      final currentZoom = _mapController.camera.zoom;
+                      _mapController.move(
+                        _mapController.camera.center,
+                        currentZoom + 1.0,
+                      );
+                    },
+                    child: const Icon(Icons.add),
+                  ),
+                  const SizedBox(height: 8),
+                  FloatingActionButton.small(
+                    heroTag: 'osm_zoom_out_btn',
+                    backgroundColor: AppColors.deepBlack,
+                    foregroundColor: AppColors.champagneGold,
+                    elevation: 3,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: AppColors.champagneGold.withValues(alpha: 0.35),
+                        width: 1.0,
+                      ),
+                    ),
+                    tooltip: 'Zoom Out',
+                    onPressed: () {
+                      final currentZoom = _mapController.camera.zoom;
+                      _mapController.move(
+                        _mapController.camera.center,
+                        currentZoom - 1.0,
+                      );
+                    },
+                    child: const Icon(Icons.remove),
+                  ),
+                  const SizedBox(height: 8),
+                  // Compact Current-Location Button (replaces Show All Branches button)
+                  FloatingActionButton(
+                    heroTag: 'osm_my_location_btn',
+                    backgroundColor: AppColors.deepBlack,
+                    foregroundColor: AppColors.signatureGold,
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: const BorderSide(
+                        color: AppColors.champagneGold,
+                        width: 1.2,
+                      ),
+                    ),
+                    tooltip: 'My Location',
+                    onPressed: () => _handleMyLocation(validBranches),
+                    child: _isLocating
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: AppColors.signatureGold,
+                            ),
+                          )
+                        : const Icon(Icons.my_location),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildNoValidCoordinatesLayout(List<Branch> branches) {
+    final isStandalone = Navigator.canPop(context);
+    final bottomOffset = isStandalone
+        ? (MediaQuery.paddingOf(context).bottom + 16.0)
+        : FloatingPillNavBarUtils.calculateControlsBottomOffset(
+            context,
+            clearance: 12.0,
+          );
+
     return Stack(
       children: [
         // Base OpenStreetMap centered on default region
@@ -808,19 +1025,16 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
         Positioned(
           left: 16,
           right: 16,
-          bottom: FloatingPillNavBarUtils.calculateControlsBottomOffset(
-            context,
-            clearance: 16.0,
-          ),
+          bottom: bottomOffset,
           top: 16,
           child: SafeArea(
             child: Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: const BorderSide(color: AppColors.borderLight),
+                side: const BorderSide(color: AppColors.subtleBorder),
               ),
               elevation: 6,
-              color: AppColors.backgroundLight,
+              color: AppColors.pureWhite,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -839,6 +1053,7 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
                             'Coordinates Unavailable',
                             style: AppTextStyles.title.copyWith(
                               fontWeight: FontWeight.bold,
+                              color: AppColors.deepBlack,
                             ),
                           ),
                         ),
@@ -849,7 +1064,7 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
                       'Map coordinates are currently being updated. You can connect with any branch directly via WhatsApp below:',
                       style: AppTextStyles.bodySecondary,
                     ),
-                    const Divider(height: 20),
+                    const Divider(height: 20, color: AppColors.subtleBorder),
                     Expanded(
                       child: ListView.separated(
                         itemCount: branches.length,
@@ -864,15 +1079,15 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
                           return Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.softWhite,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.borderLight),
+                              border: Border.all(color: AppColors.subtleBorder),
                             ),
                             child: Row(
                               children: [
                                 const Icon(
                                   Icons.storefront,
-                                  color: AppColors.secondaryGold,
+                                  color: AppColors.champagneGold,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 10),
@@ -886,6 +1101,7 @@ class _BranchMapScreenState extends ConsumerState<BranchMapScreen> {
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
+                                          color: AppColors.deepBlack,
                                         ),
                                       ),
                                       if (branch.fullAddress.isNotEmpty)

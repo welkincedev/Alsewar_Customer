@@ -5,9 +5,12 @@ import '../../../app/theme/app_text_styles.dart';
 import '../../auth/models/auth_user.dart';
 import '../../profile/screens/profile_screen.dart';
 
-/// Top header for Home Screen including:
-/// - App bar with logo, notification icon with badge, and profile avatar button
-/// - Warm customer greeting with customer display name
+/// Al Sewar Customer App — Welcome & Top Header Bar.
+///
+/// Features:
+/// - Compact top bar with brand emblem, unread notification button, and profile avatar shortcut
+/// - Warm, personalized customer greeting
+/// - Strict 44x44px minimum touch targets for accessible interaction
 class HomeHeader extends StatelessWidget {
   final AuthUser user;
   final VoidCallback? onNotificationTap;
@@ -19,98 +22,137 @@ class HomeHeader extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── App Bar Row ─────────────────────────────────────────────
+        // ── Top Navigation Row ──────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
           child: Row(
             children: [
-              // Al Sewar Logo
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+              // Al Sewar Brand Emblem
+              Container(
+                width: 44,
+                height: 44,
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: AppColors.pureWhite,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.subtleBorder, width: 1.0),
+                  boxShadow: AppColors.softShadow,
+                ),
                 child: Image.asset(
                   'assets/logos/AlSewar_logoonly.png',
-                  width: 44,
-                  height: 44,
                   fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryBlack,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
+                  errorBuilder: (_, _, _) => const Center(
+                    child: Icon(
                       Icons.local_car_wash,
-                      color: AppColors.secondaryGold,
-                      size: 26,
+                      color: AppColors.champagneGold,
+                      size: 24,
                     ),
                   ),
                 ),
               ),
               const Spacer(),
 
-              // Notification Icon with Unread Badge
-              Stack(
-                children: [
-                  _circleIconButton(
-                    icon: Icons.notifications_outlined,
-                    onTap:
-                        onNotificationTap ??
-                        () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('No new notifications.'),
-                              duration: Duration(seconds: 2),
+              // Unread Notification Button (Accessible 44x44 minimum hit target)
+              Semantics(
+                button: true,
+                label: 'Notifications',
+                child: InkResponse(
+                  onTap:
+                      onNotificationTap ??
+                      () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'All caught up! No unread notifications.',
                             ),
-                          );
-                        },
-                  ),
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.error,
-                        shape: BoxShape.circle,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                  radius: 24,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.pureWhite,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.subtleBorder),
+                          boxShadow: AppColors.softShadow,
+                        ),
+                        child: const Icon(
+                          Icons.notifications_none_outlined,
+                          size: 22,
+                          color: AppColors.deepBlack,
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        right: 10,
+                        top: 10,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: AppColors.error,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.pureWhite,
+                              width: 1.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
 
-              // Profile Avatar Button (Navigates to ProfileScreen)
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ProfileScreen(user: user),
+              // Profile Avatar Shortcut (Accessible 44x44 minimum hit target)
+              Semantics(
+                button: true,
+                label: 'My Profile',
+                child: InkResponse(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProfileScreen(user: user),
+                      ),
+                    );
+                  },
+                  radius: 24,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.champagneGold,
+                        width: 1.5,
+                      ),
+                      color: AppColors.deepBlack,
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x25C6A66B),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  );
-                },
-                child: Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.secondaryGold,
-                      width: 1.5,
-                    ),
-                    color: AppColors.primaryBlack,
-                  ),
-                  child: Center(
-                    child: Text(
-                      user.displayName.isNotEmpty
-                          ? user.displayName[0].toUpperCase()
-                          : 'C',
-                      style: const TextStyle(
-                        color: AppColors.secondaryGold,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    child: Center(
+                      child: Text(
+                        user.displayName.isNotEmpty
+                            ? user.displayName[0].toUpperCase()
+                            : 'C',
+                        style: const TextStyle(
+                          fontFamily: AppTextStyles.headingFont,
+                          color: AppColors.champagneGold,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ),
@@ -119,9 +161,9 @@ class HomeHeader extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
-        // ── Customer Greeting ───────────────────────────────────────
+        // ── Personalized Customer Greeting ──────────────────────────
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
@@ -141,41 +183,20 @@ class HomeHeader extends StatelessWidget {
                 user.displayName.isNotEmpty
                     ? user.displayName
                     : 'Valued Customer',
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.heading.copyWith(
                   fontFamily: AppTextStyles.headingFont,
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.3,
-                  color: AppColors.deepCharcoal,
+                  color: AppColors.deepBlack,
                 ),
               ),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  Widget _circleIconButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: AppColors.pureWhite,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: AppColors.sandBeige),
-          boxShadow: AppColors.softShadow,
-        ),
-        child: Icon(icon, size: 21, color: AppColors.deepCharcoal),
-      ),
     );
   }
 }

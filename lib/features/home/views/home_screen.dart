@@ -1,25 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../auth/models/auth_user.dart';
+import '../../branches/viewmodels/branch_viewmodel.dart';
 import '../../profile/screens/profile_screen.dart';
+import '../../services/viewmodels/service_providers.dart';
+import '../../vehicles/viewmodels/vehicle_providers.dart';
+import '../../visits/viewmodels/visit_providers.dart';
+import '../models/membership_tier.dart';
 import '../widgets/featured_offers.dart';
 import '../widgets/floating_pill_nav_bar.dart';
 import '../widgets/home_header.dart';
+import '../widgets/home_quick_actions.dart';
 import '../widgets/loyalty_card.dart';
 import '../widgets/promotional_banner.dart';
-import '../widgets/service_categories.dart';
 
-/// Al Sewar Auto Center — Home Screen View.
+/// Al Sewar Auto Center — Premium Home Page View.
 ///
-/// Follows the updated client UI reference:
-/// 1. App bar with notifications & profile button
-/// 2. Customer greeting
-/// 3. Prominent, flexible loyalty membership card
-/// 4. Service / category shortcut grid
-/// 5. Promotional banner carousel
-/// 6. Featured offers section
-class HomeScreen extends StatelessWidget {
+/// Built according to Desert Luxe guidelines and the streamlined hierarchy:
+/// - 1. Welcome / Hero: Compact header, branded emblem, customer greeting, notification & profile
+/// - 2. Rewards Wallet: Prominent loyalty card (the single dark luxury hero anchor)
+/// - 3. Quick Actions: 4 evenly spaced shortcuts (Branches, Services, History, Vehicles)
+/// - 4. Promotional Banner: Backend campaign banners (hidden when empty)
+/// - 5. Featured Offers: Curated promotional package showcase positioned directly below banners
+class HomeScreen extends ConsumerWidget {
   final AuthUser user;
   final Widget? floatingActionButton;
   final FloatingActionButtonLocation? floatingActionButtonLocation;
@@ -32,79 +37,98 @@ class HomeScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final bottomClearance = FloatingPillNavBarUtils.calculateBottomClearance(
       context,
-      clearance: 32.0,
+      clearance: 20.0,
     );
 
-    return Scaffold(
-      backgroundColor: AppColors.warmPorcelain,
-      floatingActionButton: floatingActionButton,
-      floatingActionButtonLocation:
-          floatingActionButtonLocation ??
-          const FloatingAbovePillNavBarLocation(),
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.champagneGold,
-          onRefresh: () async {
-            // Let sub-widgets refresh as needed
-            await Future.delayed(const Duration(milliseconds: 400));
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.only(bottom: bottomClearance),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. App Bar with logo, notifications & profile button + 2. Customer Greeting
-                HomeHeader(
-                  user: user,
-                  onNotificationTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'All caught up! No unread notifications.',
+    // Dynamic customer membership resolved directly from actual backend user data
+    final membership = CustomerMembership.fromUser(
+      memberName: user.displayName,
+      membershipId: user.membershipId,
+      points: user.loyaltyPoints ?? 0,
+      backendTier: user.membershipTier,
+    );
+
+    return Theme(
+      data: Theme.of(context).copyWith(splashFactory: InkRipple.splashFactory),
+      child: Scaffold(
+        backgroundColor: AppColors.pureWhite,
+        floatingActionButton: floatingActionButton,
+        floatingActionButtonLocation:
+            floatingActionButtonLocation ??
+            const FloatingAbovePillNavBarLocation(),
+        body: SafeArea(
+          bottom: false,
+          child: RefreshIndicator(
+            color: AppColors.champagneGold,
+            onRefresh: () async {
+              try {
+                await Future.wait([
+                  ref.read(vehicleViewModelProvider.notifier).refresh(),
+                  ref.read(visitViewModelProvider.notifier).refresh(),
+                  ref.read(branchListViewModelProvider.notifier).refresh(),
+                  ref.refresh(customerServicesProvider.future),
+                ]);
+              } catch (_) {
+                // Gracefully handle refresh in offline/test mode
+              }
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.only(bottom: bottomClearance),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. Welcome / Hero (Emblem, Greeting, Notifications & Profile Shortcut)
+                  HomeHeader(
+                    user: user,
+                    onNotificationTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'All caught up! No unread notifications.',
+                          ),
+                          duration: Duration(seconds: 2),
                         ),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 18),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-                // 3. Prominent Loyalty Membership Card
-                LoyaltyCard(
-                  memberName: user.displayName,
-                  membershipCategory: 'Gold Member',
-                  pointsBalance: 2450,
-                  pointsLabel: 'Coins',
-                  benefitsText: 'Your loyalty, rewarded.',
-                  progressToNextTier: 0.70,
-                  nextTierLabel: '550 points to Platinum',
-                  isDevelopmentPlaceholder: true,
-                  onExploreRewards: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ProfileScreen(user: user),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
+                  // 2. Rewards Wallet (Dynamic Premium Membership Card)
+                  LoyaltyCard(
+                    membership: membership,
+                    memberName: user.displayName,
+                    membershipCategory: membership.tier.displayName,
+                    pointsBalance: membership.points,
+                    pointsLabel: 'Points',
+                    membershipId: user.membershipId,
+                    progressToNextTier: membership.progressToNextTier,
+                    onExploreRewards: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ProfileScreen(user: user),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
 
-                // 4. Service / Category Shortcut Grid
-                const ServiceCategories(),
-                const SizedBox(height: 24),
+                  // 3. Quick Actions (Branches, Services, History, Vehicles)
+                  HomeQuickActions(user: user),
+                  const SizedBox(height: 20),
 
-                // 5. Promotional Banner Carousel
-                const PromotionalBanner(),
-                const SizedBox(height: 24),
+                  // 4. Promotional Banner (Shows backend banners or 3 local fallback banners)
+                  PromotionalBanner(user: user),
+                  const SizedBox(height: 18),
 
-                // 6. Featured Offers Section
-                const FeaturedOffers(),
-              ],
+                  // 5. Featured Offers (Directly below banner section)
+                  const FeaturedOffers(),
+                ],
+              ),
             ),
           ),
         ),

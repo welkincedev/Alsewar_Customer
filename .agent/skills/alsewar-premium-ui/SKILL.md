@@ -1,290 +1,185 @@
 ---
 name: alsewar-premium-ui
-description: >-
-  Comprehensive UI/UX design system and frontend architectural guidelines for Al Sewar Auto Center
-  mobile applications (Customer App and Manager App). Use this skill whenever creating, redesigning,
-  modifying, or auditing any Flutter screen, widget, layout, theme token, or navigation pattern.
-  Enforces the official Desert Luxe design language, premium glossy visual finishes, responsive
-  mobile standards, Riverpod AsyncNotifier MVVM architecture, and strict component reusability.
+description: Design system and Flutter UI guidance for every Al Sewar Auto Center customer-app screen, using the approved Home Screen and Desert Luxe visual language.
 ---
 
-# Al Sewar Auto Center — Premium UI/UX Design System Skill
-**Design Language:** Desert Luxe  
-**Target Applications:** Al Sewar Customer App & Al Sewar Manager App  
-**Architecture:** Flutter 3.x · Riverpod `AsyncNotifier` · MVVM · Dio `ApiClient`
+# Al Sewar Auto Center — Premium UI Skill
 
----
+## 1. Purpose
+Build a consistent, premium, customer-friendly **auto center** app (not car-wash-only). The current Home Screen is the primary visual reference for all other customer-app screens. Transfer its visual language—not its exact layout—to each screen's purpose.
 
-## 1. Project Context & Architectural Foundation
+Priorities: clear hierarchy, easy task completion, premium automotive identity, responsive/accessibile UI, reusable components, and truthful data. Use existing Al Sewar logos/assets; never redraw or distort the logo.
 
-Al Sewar Auto Center is a **premium automotive service and loyalty platform**, not a generic car wash utility. The platform encompasses vehicle management, live service tracking, branches and service centres, loyalty rewards, tiered vouchers, customer profiles, and operational management.
+## 2. Approved Desert Luxe palette
 
-### The Two Applications
-1. **Al Sewar Customer App:** Customer-facing mobile application emphasizing luxury automotive care, seamless service booking, real-time vehicle progress, transparent loyalty balances, and exclusive member privileges.
-2. **Al Sewar Manager App:** Operational management platform for branch supervisors, managers, and service advisors to monitor live bay queues, assign technicians, update service milestones, and review branch performance.
+Use central theme/AppColors tokens. Do not scatter new colour literals across widgets.
 
-> [!IMPORTANT]
-> Both applications share the **exact same brand identity, Desert Luxe color system, typography scale, component language, and visual quality**. Layouts and information density differ according to user workflows, but the visual luxury signature remains unified.
-
-### Technology Stack
-- **Framework:** Flutter 3.x (Dart 3.x, null-safe).
-- **State Management:** Riverpod with `AsyncNotifier` / `AsyncNotifierProvider` for robust asynchronous state.
-- **Architecture:** Feature-first MVVM (Model-View-ViewModel).
-- **Networking:** Dio via centralized `ApiClient` (`lib/core/network/api_client.dart`).
-- **Storage:** `TokenStorage` with `flutter_secure_storage` for JWT tokens.
-- **Theme Files:** `lib/app/theme/app_colors.dart`, `lib/app/theme/app_text_styles.dart`, `lib/app/theme/app_theme.dart`.
-
----
-
-## 2. Reference UI/UX Structural Inspiration
-
-When reviewing structural reference layouts, emulate their **composition and hierarchy**, while strictly translating their visual expression into the **Al Sewar Desert Luxe** palette:
-
-- **Screen Composition:** Balanced, uncluttered vertical flow with clear primary, secondary, and tertiary zones.
-- **Header Arrangements:** Compact top app bar containing the Al Sewar emblem, unread notification bell, customer greeting, and profile avatar shortcut.
-- **Loyalty Card Placement:** Positioned prominently in the top third of the viewport as the hero membership anchor.
-- **Service Shortcut Grids:** Clean 4-column or 2x4 responsive grid of elevated category tiles with high-contrast icons and readable labels.
-- **Promotional Carousels:** Horizontal swipeable card carousels with 0.92 viewport fraction and pill indicators.
-- **Horizontal Deal Lists:** Curated horizontal package cards with distinct promotional tags (`EXCLUSIVE`, `POPULAR`, `BEST VALUE`).
-- **Grouped Account Settings:** Modular, rounded card groups (e.g., `MY PROFILE`, `MY ACTIVITIES`, `SUPPORT & SETTINGS`) with consistent leading icons and subtle chevron trailing indicators.
-- **Rewards Progression:** Gamified tier step trackers (Silver -> Gold -> Platinum) with dynamic points-to-next-tier calculations.
-- **Bottom Navigation:** Rounded floating pill nav bar with dedicated bottom scroll clearance.
-
-> [!WARNING]
-> Reference layouts often feature generic blue accents or high-contrast tech blues. **Do NOT replicate blue color schemes, external logos, or third-party branding.** All structures must be rendered exclusively in the Desert Luxe palette.
-
----
-
-## 3. Official Design System – Desert Luxe
-
-All color values and gradients must be referenced through `AppColors` in `lib/app/theme/app_colors.dart`. **Never hardcode hex values in UI widgets.**
-
-### 3.1 Core Color Tokens
-
-| Token Name | Hex Code | Visual Role | Flutter Constant |
-|---|---|---|---|
-| **Warm Porcelain** | `#F6F2EA` | Scaffold background, soft ambient canvas | `AppColors.warmPorcelain` |
-| **Deep Charcoal** | `#1C1C1B` | Primary text, luxury dark cards, primary buttons, header bars | `AppColors.deepCharcoal` |
-| **Champagne Gold** | `#C6A66B` | Brand signature accent, loyalty highlights, active icons, tier badges | `AppColors.champagneGold` |
-| **Sand Beige** | `#E9E0D2` | Card borders, subtle dividers, secondary surface fill | `AppColors.sandBeige` |
-| **Pure White** | `#FFFFFF` | Card surfaces, form inputs, high-contrast text on charcoal | `AppColors.pureWhite` |
-
-### 3.2 Semantic & Typography Tokens
-
-| Token Name | Value | Purpose |
+| Token | Hex | Use |
 |---|---|---|
-| `AppColors.textPrimary` | `#1C1C1B` (Deep Charcoal) | Primary headings, prominent titles, hero values |
-| `AppColors.textSecondary` | `#636058` | Subtitles, descriptions, secondary metadata |
-| `AppColors.textLight` | `#969083` | Captions, placeholders, disabled timestamps |
-| `AppColors.success` | `#2E7D32` | Completed services, valid status, positive balance |
-| `AppColors.error` | `#C62828` | Errors, cancellation, destructive actions |
-| `AppColors.warning` | `#F57F17` | Pending notices, delays, expiring vouchers |
-| `AppColors.info` | `#1976D2` | Informational announcements |
+| `pureWhite` | `#FFFFFF` | Dominant page background, clean cards |
+| `deepBlack` | `#171717` | Main text, strong icons, premium dark surfaces |
+| `signatureGold` | `#D9B152` | Stronger gold accent, selected states, small highlights |
+| `champagneGold` | `#C6A66B` | Main soft gold, buttons and accents |
+| `richMetallicGold` | `#B38B45` | Deeper gold details, subtle borders and gradient depth |
+| `softWhite` | `#F8F8F8` | Secondary surfaces |
+| `subtleBorder` | `#E6E6E6` | Dividers and outlines |
+| `textSecondary` | `#555555` | Supporting text |
+| `textLight` | `#8A8A8A` | Metadata/captions |
 
-### 3.3 Metallic Gradients
+Keep existing aliases compatible:
+- `primaryBlack`, `deepCharcoal` → `deepBlack`
+- `warmPorcelain`, `backgroundLight` → `pureWhite`
+- `surfaceLight` → `softWhite`
+- `cardLight` → `pureWhite`
+- `sandBeige`, `borderLight` → `subtleBorder`
+- `secondaryGold` → `champagneGold`
 
-- **Gold Gradient (`AppColors.goldGradient`):**
-  - Colors: `#DEC595` (bright highlight) -> `#C6A66B` (core brand gold) -> `#A88849` (deep rich gold).
-  - Direction: `Alignment.topLeft` to `Alignment.bottomRight`.
-  - Usage: Loyalty tier badges, primary CTA button surfaces, milestone checkmarks.
-- **Charcoal Gradient (`AppColors.charcoalGradient`):**
-  - Colors: `#2C2C29` (subtle lighter top highlight) -> `#1C1C1B` (deep brand charcoal).
-  - Direction: `Alignment.topLeft` to `Alignment.bottomRight`.
-  - Usage: Premium loyalty cards, hero cards, dark promotional cards.
-- **Gold Radial Gradient (`AppColors.goldRadialGradient`):**
-  - Center: `Alignment.topLeft`, Radius: `1.5`.
-  - Usage: Circular badges, hero avatar frames, VIP medal backgrounds.
+Gold rules:
+- White remains dominant; gold is an accent, not a page background.
+- Use champagne gold for the softer gold treatment, signature gold for selective stronger emphasis, and rich metallic gold for deeper details.
+- Approved Home quick actions use a refined champagne/signature-gold treatment with dark icons and labels (Option A).
+- Avoid bright yellow, mustard-heavy surfaces, and large saturated gold blocks.
+- Check text contrast on gold; use deep black for labels/icons where appropriate.
 
-### 3.4 Elevation, Shadows & Glows
+**Blue is not currently approved.** `#021C4B` is only a possible future option. Do not use blue unless the user explicitly asks to explore or apply it.
 
-```dart
-// Ambient, ultra-soft luxury shadow for white cards on warm porcelain
-static const List<BoxShadow> softShadow = [
-  BoxShadow(color: Color(0x0A1C1C1B), blurRadius: 10, offset: Offset(0, 3)),
-];
+## 3. Surfaces, effects and imagery
+- Predominantly white backgrounds; clean white cards with subtle borders.
+- Reserve dark premium surfaces for meaningful hierarchy, especially membership.
+- Use restrained shadows, controlled highlights, polished automotive imagery and subtle material depth.
+- Glassmorphism only for appropriate floating controls/overlays, not every card.
+- Neumorphism/inset effects are not the default; use only if explicitly requested and maintain contrast.
+- Avoid excessive gradients, heavy shadows, decorative borders, generic SaaS grids, clutter, cartoonish coin art, and unrelated stock imagery.
+- Use approved Al Sewar assets and relevant automotive imagery. Preserve aspect ratio and provide image fallbacks.
 
-// Medium depth shadow for elevated containers and modal sheets
-static const List<BoxShadow> cardShadow = [
-  BoxShadow(color: Color(0x101C1C1B), blurRadius: 12, offset: Offset(0, 4)),
-];
+## 4. Typography
+Reuse the project's configured fonts; do not add duplicate declarations:
+- **Manrope:** page/section headings, important numbers, prominent card titles.
+- **DM Sans:** body, labels, buttons, helper text and metadata.
 
-// Subtle metallic gold illumination for VIP badges and selected items
-static const List<BoxShadow> goldGlow = [
-  BoxShadow(color: Color(0x28C6A66B), blurRadius: 12, offset: Offset(0, 4)),
-];
-```
+Keep a clear hierarchy and concise customer-friendly copy. Avoid tiny microcopy and unnecessary all-caps. Support text scaling; never hide layout problems by shrinking all text.
 
----
+## 5. Home Screen — source of truth
 
-## 4. Typography System
+Inspect the current implementation before editing because code may differ from older plans. Latest approved Home structure:
 
-The application registers two distinct Google fonts in `pubspec.yaml`:
-1. **Manrope** for authoritative, luxurious headings, section titles, and numerical metrics.
-2. **DM Sans** for crisp, comfortable, legible body copy, button labels, and metadata.
+1. **Compact greeting/header:** customer context; notification only if supported. Avoid duplicate profile actions.
+2. **Membership/loyalty card:** primary visual anchor; premium dark surface with restrained gold; actual backend points/tier only; concise details; opens existing membership/rewards flow.
+3. **Quick actions:** exactly **Branches, Services, History, Vehicles**, in that order. Use Option A gold buttons; equal tile dimensions; consistent icons, labels, gaps, and touch feedback; preserve routes/callbacks.
+4. **Promotional banners:** horizontal carousel before Featured Offers. Active backend banners take priority. If none exist, show approved local fallback banners rather than an unexplained blank area. Concepts: Premium Auto Care, Complete Auto Care, Loyalty. Do not invent prices, discounts, or claims. Target source ratio around 1080×400 (2.7:1), cropped responsively.
+5. **Featured Offers:** concise, relevant offers; backend data where available; no invented values, expiry, savings, or eligibility.
 
-All styles are centralized in `lib/app/theme/app_text_styles.dart`:
+Latest exclusions:
+- Do not reintroduce separate **My Vehicles** or **Recent Services** sections on Home unless the user changes this decision.
+- Vehicles and History remain accessible through quick actions.
+- Avoid duplicate promotional sections and competing dark cards.
 
-| Style Constant | Font Family | Size | Weight | Tracking | Primary Usage |
-|---|---|---|---|---|---|
-| `AppTextStyles.display` | Manrope | 30px | Bold (w700) | -0.5 | Splash branding, hero metrics |
-| `AppTextStyles.heading` | Manrope | 24px | Bold (w700) | -0.2 | Screen titles, modal sheet headers |
-| `AppTextStyles.sectionHeading` | Manrope | 18px | Semibold (w600) | -0.1 | Section headers ("Our Services", "Featured Offers") |
-| `AppTextStyles.title` | Manrope | 18px | Semibold (w600) | +0.1 | Card primary titles, branch names |
-| `AppTextStyles.cardTitle` | Manrope | 15px | Semibold (w600) | +0.1 | Grid item labels, offer card titles |
-| `AppTextStyles.loyaltyPoints` | Manrope | 30px | Bold (w700) | -0.5 | Points balance counters (Champagne Gold) |
-| `AppTextStyles.bodyPrimary` | DM Sans | 14px | Regular (w400) | +0.2 | Main descriptions, form field text |
-| `AppTextStyles.bodySecondary` | DM Sans | 13px | Regular (w400) | +0.2 | Supporting copy, timestamps, addresses |
-| `AppTextStyles.supporting` | DM Sans | 12px | Regular (w400) | +0.2 | Form helper labels, status subtext |
-| `AppTextStyles.button` | DM Sans | 14px | Semibold (w600) | +0.5 | Elevated & outlined button labels |
-| `AppTextStyles.caption` | DM Sans | 11px | Regular (w400) | +0.2 | Legal disclaimers, micro metadata |
-| `AppTextStyles.emphasis` | DM Sans | 13px | Italic (w400) | +0.2 | Subtle quotes, brand taglines |
+Membership styling:
+- Silver: brushed-metal silver.
+- Gold: dark premium surface with champagne-gold foil accents.
+- Platinum: graphite/platinum with restrained silver.
+- Tier and points are backend-driven; never customer-editable.
+- Preview tiers/sample points are development-only and must not alter production data.
 
-> [!TIP]
-> Never invent arbitrary font sizes or weights in widget files. If a new typography style is legitimately required, add it directly to `AppTextStyles`.
+Quick-action details:
+- Refined champagne/signature gold, dark readable icons/text.
+- Equal visible widths/heights. Put spacing between `Expanded` children, not asymmetric padding inside only some tiles.
+- Consistent radius, internal padding, icon size, label baseline and subtle press feedback.
 
----
+Home layout:
+- No excessive blank space above greeting.
+- Consistent margins and section gaps.
+- Keep content clear of bottom navigation.
+- No negative padding or arbitrary spacer hacks.
+- Verify initial/loading/empty/error states.
 
-## 5. Premium Glossy Visual Direction
+## 6. Reusable rules for every page
 
-Al Sewar interfaces must reflect the refined craftsmanship of high-end automotive brands (Porsche, Aston Martin, Bentley). The visual signature combines **Deep Charcoal**, **Champagne Gold**, **subtle specular reflections**, and clean **Warm Porcelain** surfaces.
+**Headers:** compact and consistent; Manrope title, DM Sans supporting text; aligned actions; no duplicate navigation actions; respect safe areas.
 
-### 5.1 Glossy Implementation Rules
-1. **Subtle Reflective Highlights:** Luxury surfaces use a 1px border with `AppColors.champagneGold.withValues(alpha: 0.22)` or a delicate top-edge specular gradient to simulate an automotive clear coat.
-2. **Layered Surfaces:** Build depth through tone:
-   - Base Canvas: `AppColors.warmPorcelain`.
-   - Primary Cards: `AppColors.pureWhite` with 1px `AppColors.sandBeige` border and `AppColors.cardShadow`.
-   - Hero Surfaces: `AppColors.charcoalGradient` with gold perimeter border and `AppColors.softShadow`.
-3. **Metallic Champagne Gold Accents:** Gold is used purposefully for high-value signals (VIP tiers, coin totals, active navigation indicators, primary CTA buttons). It must never look neon, yellow, or brassy.
-4. **Restraint & Legibility:**
-   - **No universal glassmorphism:** Do not place `BackdropFilter` blurs across the whole app. It tanks rendering speed and degrades contrast.
-   - **No muddy drop shadows:** Use low-opacity charcoal shadows (`0x0A` to `0x10`).
-   - **Readability first:** High-contrast text is non-negotiable. Charcoal text on Porcelain/White; Pure White or Gold text on Charcoal.
+**Cards:** use only to group related content. Prefer white surfaces/subtle borders; reserve dark surfaces for important anchors. Keep padding/radii consistent. Avoid unnecessary nested cards.
 
-For detailed recipes and code patterns, consult the [Glossy Surfaces Guide](./references/glossy_surfaces_guide.md).
+**Buttons:** clear primary/secondary hierarchy; gold selectively for primary/selected actions; short action labels; target at least 44×44 logical px where practical; implement loading/disabled/error feedback. Do not make every text link look like a primary button.
 
----
+**Lists/history:** scan-friendly title, supporting line and useful metadata; consistent rows/dividers; truthful dates/status/points. Never display nulls, fake statistics or placeholder data as live. Do not rely on colour alone for status.
 
-## 6. Layout & Responsive Design Standards
+**Forms:** consistent field height, borders, focus and validation; only expose fields supported by requirements/API; preserve keyboard scrolling and safe areas.
 
-Mobile devices vary widely from compact 320px screens to large 430px+ phablets. Every screen must adapt fluidly without overflow bugs or awkward whitespace.
+**Navigation/insets:** preserve existing routes and navigation structure; do not add/remove tabs without instruction; maintain active/inactive states; use existing bottom-clearance utilities; prevent content being covered by navigation.
 
-### 6.1 Spatial Grid & Metrics
-- **Horizontal Screen Padding:** Standard `20.0px` (reduce to `14.0px` on screens `< 360px` width).
-- **Vertical Spacing Scale:**
-  - Micro: `4.0px` / `8.0px` (icon-to-text, badge padding).
-  - Tight: `12.0px` (spacing between related list items).
-  - Medium: `16.0px` (card internal padding, form field gaps).
-  - Sectional: `24.0px` (space between distinct sections).
-  - Major: `32.0px` (distance between major layout blocks).
-- **Border Radii:**
-  - Standard Cards: `16.0px` to `18.0px`.
-  - Category / Grid Tiles: `12.0px` to `14.0px`.
-  - Badges & Buttons: `10.0px` to `12.0px`.
-  - Floating Nav Bars & Full Pills: `30.0px` to `36.0px`.
+## 7. Responsive design and accessibility
+Test at minimum:
+- Compact: 320×568
+- Standard: 390×844
+- Large: 480×900
 
-### 6.2 Responsive Guidelines
-- **Bottom Navigation Clearance:** Always pad scrollable content by the nav bar height using:
-  ```dart
-  final bottomClearance = FloatingPillNavBarUtils.calculateBottomClearance(
-    context,
-    clearance: 32.0,
-  );
-  ```
-- **Text Safety:** Always assign `maxLines` and `overflow: TextOverflow.ellipsis` to text inside flexible rows, headers, and cards.
-- **Scroll Physics:** Use `SingleChildScrollView(physics: const AlwaysScrollableScrollPhysics())` combined with `RefreshIndicator` on dashboard views.
-- **Wrap with SafeArea:** Never allow content to collide with notches, camera punch-holes, or home indicator bars.
+Use flexible constraints/LayoutBuilder where useful. Avoid fixed widths causing overflow. Adapt grids; handle long names/addresses; test large text scaling, keyboard-open layouts and long content. Maintain contrast, semantic labels, TalkBack/native touch feedback. Verify iOS too if targeted. Do not solve overflow by hiding information or globally shrinking text.
 
----
+## 8. Flutter engineering constraints
+Project conventions: Flutter/Dart, Riverpod (`AsyncNotifier` where it matches existing state), MVVM-style feature organization, Dio through existing API client, existing secure JWT/session handling.
 
-## 7. Reusable Component Catalog
+Before editing:
+1. Inspect the target screen, child widgets, routes, providers, models, theme and API contracts.
+2. Identify what must be preserved and the exact requested scope.
+3. Audit hierarchy, spacing, responsiveness, accessibility and states.
+4. Reuse existing components/state owners.
 
-Always consult the [Component Catalog](./references/component_catalog.md) before writing new UI components. Existing components include:
+During implementation:
+- Preserve working routes, callbacks, APIs, auth and business logic.
+- Do not rewrite architecture or unrelated features for a visual task.
+- Do not add dependencies without a concrete need.
+- Do not invent endpoints, fields, business rules or capabilities.
+- Handle loading/data/empty/error states explicitly.
+- Keep components focused; avoid unnecessary abstraction.
+- Centralize theme/content values rather than scattering literals.
 
-1. **`LoyaltyCard`** (`lib/features/home/widgets/loyalty_card.dart`): Reusable membership card supporting user name, tier, coin balance, and animated progress to next tier.
-2. **`FloatingPillNavBar`** (`lib/features/home/widgets/floating_pill_nav_bar.dart`): Floating navigation pill with sliding white indicator, Sand Beige inactive icons, and Gold active accents.
-3. **`HomeHeader`** (`lib/features/home/widgets/home_header.dart`): Top bar with branded emblem, customer greeting, and unread notification badge.
-4. **`ServiceCategories`** (`lib/features/home/widgets/service_categories.dart`): Responsive 4-column service shortcut grid wired to `customerServicesProvider`.
-5. **`PromotionalBanner`** (`lib/features/home/widgets/promotional_banner.dart`): Swipeable carousel for seasonal campaigns and member reward announcements.
-6. **`FeaturedOffers`** (`lib/features/home/widgets/featured_offers.dart`): Horizontal cards displaying bundled auto detailing packages.
-7. **`BranchDetailsBottomSheet`** (`lib/features/branches/widgets/branch_details_bottom_sheet.dart`): Modal bottom sheet with branch details, directions, phone call, and WhatsApp concierge actions.
+## 9. Data integrity
+Use API data only where the existing endpoint/provider supports it. Static content is appropriate only when explicitly intended (e.g. approved company-profile copy or fallback banner artwork). Never invent balances, tiers, visits, branches, coordinates, ratings, hours, prices, offers, contact details or company claims. Hide unavailable values or show a truthful empty state. Do not create fake APIs. For future backend-managed content, use a simple model/provider boundary so the source can be swapped later without redesigning the UI.
 
----
+## 10. Screen-specific guidance
+These rules do not authorize adding unsupported features:
+- **About Us:** match Home typography, spacing, palette and imagery. Keep company-profile content concise and centralized/static for now; use existing branch API for live branches. Structure content so an API source can replace static content later without redesign.
+- **Branches/Map:** readable branch details and bottom sheets; preserve existing OpenStreetMap integration/attribution; never invent coordinates or distances.
+- **Services:** real service categories/details; no unsupported booking.
+- **History/Visits:** service, date, vehicle, branch, status and points only where available; compact scan-friendly list.
+- **Vehicles:** clear identity/registration; respect existing customer permissions and supported CRUD.
+- **Rewards/Membership:** dynamic Silver/Gold/Platinum styling and actual backend values; no invented redemption rules.
+- **Profile/Settings:** clear organization; only supported actions.
+- **Support:** verified contact details and existing branch/WhatsApp data; hide/disable actions if required data is missing.
 
-## 8. Screen-Specific UX Guidance
+## 11. Workflow for every redesign
+**Inspect → Audit/plan → Implement → Verify.**
+- Inspect current code and Home Screen reference first.
+- Produce a focused plan; avoid scope creep.
+- Implement using approved tokens/shared components and preserve data/navigation.
+- Run `dart format .`, `flutter analyze`, and relevant tests.
+- Review rendered UI at all target sizes; check overflow, clipping, contrast, touch targets, keyboard, scrolling and bottom clearance.
+- Report exact files changed, test results, and anything still needing physical-device/backend verification. Passing tests alone do not prove visual quality.
 
-Detailed screen architectures are documented in [Screen Blueprints](./references/screen_blueprints.md). Key rules per screen:
+## 12. Installed design skills
+Use relevant installed skills where available:
+- `frontend-design`: visual direction.
+- `improve-ui`: audit and focused plan.
+- `better-ui` / `impeccable`: surface polish.
+- `frontend-ui-engineering`: responsive implementation/accessibility.
+- `ponytail`: simplest complete solution; avoid overengineering.
+- `android-native-ui`: Android insets, ripple, semantics and back behavior.
+- `ui-review`: rendered visual review.
+- `apple-native-ui`: only when iOS behavior is relevant.
 
-### 8.1 Home Dashboard
-- Compact `HomeHeader` -> `LoyaltyCard` -> `ServiceCategories` (4-column grid) -> `PromotionalBanner` (carousel) -> `ActiveVisitTracker` -> `FeaturedOffers` -> Safe bottom clearance.
+Do not invoke skills mechanically if unavailable. Their advice must not override the approved Al Sewar palette, project constraints or explicit user decisions.
 
-### 8.2 Rewards & Loyalty
-- Tier status header -> Glossy points balance counter (`AppTextStyles.loyaltyPoints`) -> Tier progression milestone track -> Voucher collection cards with dashed coupon borders -> Points redemption history.
-
-### 8.3 Profile & Account
-- Avatar header card with tier chip -> Grouped settings cards (`MY PROFILE`, `MY ACTIVITIES`, `SUPPORT & SETTINGS`) -> Consistent leading icons & trailing chevrons -> Destructive sign-out modal.
-
-### 8.4 Service Visits & Milestones
-- Tab switcher (Active / Past) -> Visit card with `SV-...` reference, stage badge, vehicle info -> Vertical chronological milestone timeline with gold pulsing active node -> Invoice download button.
-
-### 8.5 Branches & Service Centres
-- Map/List toggle -> Clean branded map with gold pins -> Branch card with live operating hours tag ("Open Now" / "Closed") -> Interactive bottom sheet with WhatsApp concierge integration.
-
-### 8.6 Manager Operational Views
-- High-clarity operational dashboard -> Bay status grid -> Real-time vehicle check-in modal -> Quick technician assignment -> KPI metrics (Bays Active, Queue, Completed, Daily Revenue).
-
----
-
-## 9. Mandatory Flutter Implementation & Architectural Rules
-
-Before touching or authoring any screen, follow this mandatory 8-step workflow:
-
-```mermaid
-flowchart TD
-  A["1. Inspect Existing Screen & Route"] --> B["2. Understand Current User Flow"]
-  B --> C["3. Review AppColors & AppTextStyles"]
-  C --> D["4. Check Reusable Widget Catalog"]
-  D --> E["5. Inspect Riverpod State (AsyncNotifier)"]
-  E --> F["6. Verify & Preserve API Endpoints (Dio)"]
-  F --> G["7. Preserve Navigation & Business Logic"]
-  G --> H["8. Apply Desert Luxe UI Improvements"]
-```
-
-### Cardinal Rules
-1. **Never break working functionality:** Visual upgrades must not alter underlying business logic, state mutations, or navigation parameters.
-2. **Never mock existing live APIs:** If an endpoint is already integrated (`AuthService`, `BranchService`, `VehicleService`, `VisitApiService`, `ReviewService`), consume real data via its Riverpod provider.
-3. **Never place business logic in widgets:** Keep controllers, API calls, and data mapping in the ViewModel layer. UI widgets should only watch state and dispatch intents.
-4. **Always handle all `AsyncValue` states:**
-   ```dart
-   final asyncData = ref.watch(myProvider);
-   return asyncData.when(
-     data: (data) => _buildContent(data),
-     loading: () => const Center(child: CircularProgressIndicator(color: AppColors.champagneGold)),
-     error: (err, stack) => _buildErrorState(err),
-   );
-   ```
-5. **Enforce `const` constructors:** Use `const` wherever possible to minimize widget rebuilds and optimize frame rates.
-
----
-
-## 10. UI Quality & Verification Checklist
-
-Before completing any UI task, run through this verification checklist:
-
-- [ ] **Color Fidelity:** All colors use `AppColors` tokens. Zero hardcoded hex values in screens.
-- [ ] **Typography:** All text styles use `AppTextStyles` (Manrope for headings/metrics, DM Sans for body/controls).
-- [ ] **Glossy Restraint:** Metallic champagne gold and charcoal gradients are used selectively for hero elements, not plastered across every container.
-- [ ] **Screen Margins:** Consistent `20px` horizontal screen padding applied.
-- [ ] **Bottom Clearance:** Scrollable views include bottom clearance for the floating navigation pill.
-- [ ] **No RenderFlex Overflows:** Tested in portrait mode; flexible texts wrapped in `Expanded`/`Flexible` with `TextOverflow.ellipsis`.
-- [ ] **Touch Targets:** All interactive icons and buttons meet the minimum `44x44px` touch target size.
-- [ ] **State Coverage:** Loading indicators use `AppColors.champagneGold`; empty states offer actionable messages; error states provide retry buttons.
-- [ ] **Static Analysis:** Code passes `flutter analyze` without introduced warnings or lint violations.
-- [ ] **Formatting:** Files are formatted cleanly using standard Dart conventions.
-
----
-
-## 11. Design Philosophy Summary
-
-> *"Al Sewar does not look like a generic Flutter utility. It looks and feels like an exclusive automotive salon."*
-
-The visual identity is defined by the contrast between **warm, clean porcelain backgrounds**, **deep charcoal architectural elements**, **refined metallic champagne gold accents**, and **subtle specular reflections**. Every screen must exude prestige, modern engineering, and uncompromising quality.
+## 13. Acceptance checklist
+- [ ] Screen feels part of the Al Sewar Home Screen/Desert Luxe system.
+- [ ] Approved palette is used; no unapproved blue or unrelated accent colours.
+- [ ] Existing Manrope and DM Sans are reused.
+- [ ] White remains dominant; gold is selective and readable.
+- [ ] Dark surfaces have a clear purpose.
+- [ ] Spacing, typography, radii, icons and buttons are consistent.
+- [ ] Existing navigation, providers, APIs and business logic are preserved.
+- [ ] No fake data, invented claims or unsupported functionality.
+- [ ] Loading, empty and error states are handled.
+- [ ] Compact, standard and large layouts are checked.
+- [ ] Safe areas, keyboard and bottom navigation do not obscure content.
+- [ ] Formatting, analyzer and relevant tests are run and results reported.
+- [ ] Rendered UI is visually reviewed; tests alone are not treated as visual proof.

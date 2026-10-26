@@ -8,7 +8,7 @@ import '../../features/visits/models/service_visit.dart';
 
 /// Centralized sample mock data for UI previews during offline development.
 ///
-/// All mock data items are clearly tagged with `[Preview]` so they cannot be
+/// All mock data items are clearly tagged with `#` so they cannot be
 /// mistaken for real customer information.
 class PreviewMockData {
   // ─── 1. Sample Customer Profile ──────────────────────────────────────────
@@ -19,8 +19,11 @@ class PreviewMockData {
     role: 'CUSTOMER',
     phone: '+966 50 123 4567',
     firstName: 'Ahmed',
-    lastName: 'Al-Mansoor [Preview]',
+    lastName: 'Al-Mansoor #',
     isActive: true,
+    loyaltyPoints: 23021,
+    membershipTier: 'Silver',
+    membershipId: 'AS-88301',
   );
 
   // ─── 2. Sample Vehicles ──────────────────────────────────────────────────
@@ -29,12 +32,12 @@ class PreviewMockData {
       id: 101,
       plateNumber: 'PRV 101',
       make: 'Mercedes-Benz',
-      model: 'S 500 [Preview]',
+      model: 'S 500 #',
       year: 2024,
       color: 'Obsidian Black',
       vin: 'WDD2230631A000001',
       branch: 1,
-      branchName: 'Al Sewar Riyadh Olaya [Preview]',
+      branchName: 'Al Sewar Riyadh Olaya #',
       createdAt: '2026-01-15T10:00:00Z',
       updatedAt: '2026-10-14T12:00:00Z',
     ),
@@ -42,12 +45,12 @@ class PreviewMockData {
       id: 102,
       plateNumber: 'PRV 202',
       make: 'Porsche',
-      model: 'Cayenne GTS [Preview]',
+      model: 'Cayenne GTS #',
       year: 2023,
       color: 'Chalk White',
       vin: 'WP1AA2AY8PDA00002',
       branch: 2,
-      branchName: 'Al Sewar Jeddah Corniche [Preview]',
+      branchName: 'Al Sewar Jeddah Corniche #',
       createdAt: '2026-03-20T10:00:00Z',
       updatedAt: '2026-09-28T12:00:00Z',
     ),
@@ -56,12 +59,12 @@ class PreviewMockData {
       id: 103,
       plateNumber: 'PRV 303',
       make: 'Lexus',
-      model: 'LX 600 [Preview]',
+      model: 'LX 600 #',
       year: 2025,
       color: 'Sand Pearl',
       vin: 'JTJHY7AX8R4000003',
       branch: 1,
-      branchName: 'Al Sewar Riyadh Olaya [Preview]',
+      branchName: 'Al Sewar Riyadh Olaya #',
       createdAt: '2026-10-01T10:00:00Z',
       updatedAt: '2026-10-01T10:00:00Z',
     ),
@@ -71,32 +74,32 @@ class PreviewMockData {
   static const List<ServiceItem> sampleServices = [
     ServiceItem(
       id: 1,
-      name: 'Executive Hydro-Wash [Preview]',
+      name: 'Executive Hydro-Wash #',
       description: '4-stage pH-balanced wash with wheel de-ironing and paint gloss sealant.',
     ),
     ServiceItem(
       id: 2,
-      name: 'Ceramic Shield Detailing [Preview]',
+      name: 'Ceramic Shield Detailing #',
       description: 'Clay-bar decontamination, 2-stage paint correction, and 9H ceramic coating.',
     ),
     ServiceItem(
       id: 3,
-      name: 'Interior Ozone Sanitization [Preview]',
+      name: 'Interior Ozone Sanitization #',
       description: 'Deep steam extraction, leather conditioning, and anti-bacterial ozone air purification.',
     ),
     ServiceItem(
       id: 4,
-      name: 'Engine Bay Steam Rejuvenation [Preview]',
+      name: 'Engine Bay Steam Rejuvenation #',
       description: 'Precision degreasing, steam cleansing, and protective electrical component dressing.',
     ),
     ServiceItem(
       id: 5,
-      name: 'Headlight Lens Restoration [Preview]',
+      name: 'Headlight Lens Restoration #',
       description: 'Multi-stage wet sanding, compounding polish, and UV anti-yellowing sealant layer.',
     ),
     ServiceItem(
       id: 6,
-      name: 'Underbody Anti-Corrosion Treatment [Preview]',
+      name: 'Underbody Anti-Corrosion Treatment #',
       description: 'High-pressure undercarriage flush and salt-resistant protective barrier coat.',
     ),
   ];
@@ -111,11 +114,11 @@ class PreviewMockData {
         'id': 101,
         'plate_number': 'PRV 101',
         'make': 'Mercedes-Benz',
-        'model': 'S 500 [Preview]',
+        'model': 'S 500 #',
       },
       branchDetails: {
         'id': 1,
-        'name': 'Al Sewar Riyadh Olaya [Preview]',
+        'name': 'Al Sewar Riyadh Olaya #',
         'city': 'Riyadh',
       },
       currentStage: VisitStage(
@@ -126,12 +129,12 @@ class PreviewMockData {
       services: [
         VisitServiceEntry(
           id: 1,
-          name: 'Executive Hydro-Wash [Preview]',
+          name: 'Executive Hydro-Wash #',
           description: 'Full exterior wash',
         ),
         VisitServiceEntry(
           id: 2,
-          name: 'Ceramic Shield Detailing [Preview]',
+          name: 'Ceramic Shield Detailing #',
           description: 'Ceramic coating application',
         ),
       ],
@@ -165,11 +168,11 @@ class PreviewMockData {
         'id': 102,
         'plate_number': 'PRV 202',
         'make': 'Porsche',
-        'model': 'Cayenne GTS [Preview]',
+        'model': 'Cayenne GTS #',
       },
       branchDetails: {
         'id': 2,
-        'name': 'Al Sewar Jeddah Corniche [Preview]',
+        'name': 'Al Sewar Jeddah Corniche #',
         'city': 'Jeddah',
       },
       currentStage: VisitStage(
@@ -180,7 +183,7 @@ class PreviewMockData {
       services: [
         VisitServiceEntry(
           id: 3,
-          name: 'Interior Ozone Sanitization [Preview]',
+          name: 'Interior Ozone Sanitization #',
           description: 'Deep leather and carpet steam',
         ),
       ],
@@ -203,11 +206,11 @@ class PreviewMockData {
         'id': 101,
         'plate_number': 'PRV 101',
         'make': 'Mercedes-Benz',
-        'model': 'S 500 [Preview]',
+        'model': 'S 500 #',
       },
       branchDetails: {
         'id': 1,
-        'name': 'Al Sewar Riyadh Olaya [Preview]',
+        'name': 'Al Sewar Riyadh Olaya #',
         'city': 'Riyadh',
       },
       currentStage: VisitStage(
@@ -218,7 +221,7 @@ class PreviewMockData {
       services: [
         VisitServiceEntry(
           id: 4,
-          name: 'Engine Bay Steam Rejuvenation [Preview]',
+          name: 'Engine Bay Steam Rejuvenation #',
           description: 'Precision under-hood detailing',
         ),
       ],
@@ -251,7 +254,7 @@ class PreviewMockData {
   static const List<Branch> sampleBranches = [
     Branch(
       id: 1,
-      name: 'Al Sewar Riyadh Olaya [Preview]',
+      name: 'Al Sewar Riyadh Olaya #',
       code: 'OLY01',
       address: 'King Fahd Road, Al Olaya District',
       city: 'Riyadh',
@@ -263,7 +266,7 @@ class PreviewMockData {
     ),
     Branch(
       id: 2,
-      name: 'Al Sewar Jeddah Corniche [Preview]',
+      name: 'Al Sewar Jeddah Corniche #',
       code: 'JED01',
       address: 'Corniche Road, Ash Shati',
       city: 'Jeddah',
@@ -275,7 +278,7 @@ class PreviewMockData {
     ),
     Branch(
       id: 3,
-      name: 'Al Sewar Dammam Express [Preview]',
+      name: 'Al Sewar Dammam Express #',
       code: 'DMM01',
       address: 'Prince Mohammad Bin Fahd Road',
       city: 'Dammam',
@@ -360,9 +363,9 @@ class PreviewMockData {
       id: 1,
       visitId: 201,
       visitDetails: {'visit_number': 'PRV-VISIT-2026-001'},
-      branchDetails: {'name': 'Al Sewar Riyadh Olaya [Preview]'},
+      branchDetails: {'name': 'Al Sewar Riyadh Olaya #'},
       rating: 5,
-      comment: 'Flawless ceramic coat and mirror finish on my S-Class! Excellent attention to detail. [PREVIEW]',
+      comment: 'Flawless ceramic coat and mirror finish on my S-Class! Excellent attention to detail. #',
       isApproved: true,
       createdAt: '2026-10-14T14:00:00Z',
     ),
@@ -370,9 +373,10 @@ class PreviewMockData {
       id: 2,
       visitId: 202,
       visitDetails: {'visit_number': 'PRV-VISIT-2026-002'},
-      branchDetails: {'name': 'Al Sewar Jeddah Corniche [Preview]'},
+      branchDetails: {'name': 'Al Sewar Jeddah Corniche #'},
       rating: 5,
-      comment: 'Interior ozone treatment removed all odors. Showroom fresh feel. [PREVIEW]',
+      comment:
+          'Interior ozone treatment removed all odors. Showroom fresh feel. #',
       isApproved: true,
       createdAt: '2026-09-28T16:00:00Z',
     ),

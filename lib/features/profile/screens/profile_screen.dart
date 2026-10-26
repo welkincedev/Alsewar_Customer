@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../../app/theme/app_text_styles.dart';
-import '../../../core/constants/api_constants.dart';
+import '../../about/screens/about_us_screen.dart';
 import '../../auth/models/auth_user.dart';
 import '../../auth/viewmodels/auth_viewmodel.dart';
 import '../../branches/screens/branch_list_screen.dart';
+import '../../branches/screens/branch_map_screen.dart';
+import '../../home/models/membership_tier.dart';
+import '../../home/widgets/membership_details_bottom_sheet.dart';
 import '../../reviews/screens/reviews_screen.dart';
 import '../../services/screens/services_screen.dart';
 import '../../vehicles/screens/vehicles_screen.dart';
@@ -44,6 +46,13 @@ class ProfileScreen extends ConsumerWidget {
         ),
       );
     }
+
+    final membership = CustomerMembership.fromUser(
+      memberName: currentUser.displayName,
+      membershipId: currentUser.membershipId,
+      points: currentUser.loyaltyPoints ?? 0,
+      backendTier: currentUser.membershipTier,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.warmPorcelain,
@@ -153,9 +162,13 @@ class ProfileScreen extends ConsumerWidget {
                 _actionTile(
                   icon: Icons.workspace_premium_outlined,
                   title: 'Loyalty Points & Rewards',
-                  subtitle: 'Gold Member · 2,450 Coins (Development Tier)',
-                  trailingBadge: '2,450',
-                  onTap: () => _showLoyaltyInfo(context),
+                  subtitle:
+                      '${membership.tier.displayName} · ${membership.points} Points',
+                  trailingBadge: '${membership.points}',
+                  onTap: () => MembershipDetailsBottomSheet.show(
+                    context,
+                    membership: membership,
+                  ),
                 ),
               ]),
               const SizedBox(height: 24),
@@ -177,14 +190,17 @@ class ProfileScreen extends ConsumerWidget {
                 _actionTile(
                   icon: Icons.headset_mic_outlined,
                   title: 'Customer Support',
-                  subtitle: 'Assistance, operating hours & helpline',
-                  onTap: () => _showCustomerSupportDialog(context),
+                  subtitle: 'About Al Sewar, mission, core services & contact',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AboutUsScreen()),
+                  ),
                 ),
                 _divider(),
                 _actionTile(
                   icon: Icons.chat_outlined,
                   title: 'WhatsApp Support',
-                  subtitle: 'Direct help via official WhatsApp channel',
+                  subtitle: 'Select a branch for direct verified WhatsApp chat',
                   trailingWidget: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -195,7 +211,7 @@ class ProfileScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
-                      'Direct',
+                      'Branches',
                       style: TextStyle(
                         color: Color(0xFF1E7E34),
                         fontSize: 11,
@@ -203,7 +219,10 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  onTap: () => _openWhatsAppSupport(context),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const BranchMapScreen()),
+                  ),
                 ),
                 _divider(),
               ]),
@@ -525,207 +544,6 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   // ── Actions & Dialogs ──────────────────────────────────────────────
-
-  void _showLoyaltyInfo(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryBlack,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.workspace_premium,
-                      color: AppColors.secondaryGold,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Loyalty Program',
-                      style: AppTextStyles.heading,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      'Preview Stage',
-                      style: TextStyle(
-                        color: AppColors.warning,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Your current membership tier is Gold Member with 2,450 points. As per backend API specification, real-time loyalty point earning and redemption endpoints are scheduled for upcoming backend phases.',
-                style: AppTextStyles.bodySecondary,
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlack,
-                    foregroundColor: AppColors.secondaryGold,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Close'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showCustomerSupportDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: const [
-            Icon(Icons.headset_mic, color: AppColors.secondaryGold),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text('Customer Support', overflow: TextOverflow.ellipsis),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Al Sewar Customer Assistance is available Saturday to Thursday, 8:00 AM - 10:00 PM.',
-              style: AppTextStyles.bodySecondary,
-            ),
-            const SizedBox(height: 14),
-            _dialogInfoRow(Icons.phone, 'Helpline', ApiConstants.supportPhone),
-            const SizedBox(height: 8),
-            _dialogInfoRow(Icons.email, 'Email', ApiConstants.supportEmail),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _openWhatsAppSupport(BuildContext context) {
-    final number = ApiConstants.whatsappSupportNumber;
-    if (number.trim().isEmpty) {
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Row(
-            children: const [
-              Icon(Icons.chat, color: Color(0xFF25D366)),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'WhatsApp Support',
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          content: const Text(
-            'The official Al Sewar WhatsApp support number is currently being configured by administration. Please reach our helpline directly via Customer Support.',
-            style: AppTextStyles.bodySecondary,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Contact via WhatsApp'),
-          content: Text(
-            'Official WhatsApp Support: $number\n\nYou can chat with an Al Sewar representative directly for bookings and queries.',
-            style: AppTextStyles.bodySecondary,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: number));
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('WhatsApp number copied to clipboard.'),
-                    backgroundColor: AppColors.primaryBlack,
-                  ),
-                );
-              },
-              child: const Text('Copy Number'),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF25D366),
-              ),
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Done'),
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
-  Widget _dialogInfoRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: AppColors.secondaryGold),
-        const SizedBox(width: 8),
-        Text(
-          '$label: ',
-          style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.bold),
-        ),
-        Expanded(child: Text(value, style: AppTextStyles.bodySecondary)),
-      ],
-    );
-  }
 
   Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(

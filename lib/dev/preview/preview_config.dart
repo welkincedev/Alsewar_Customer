@@ -22,7 +22,7 @@ class PreviewConfig {
 
   /// Manual development toggle. Set to `true` to enable preview mode while
   /// the backend server is offline; set to `false` when connecting to live backend.
-  static bool manualOverride = false;
+  static bool manualOverride = true;
 
   /// Effective preview mode flag.
   static bool get isPreviewEnabled => _fromEnvironment || manualOverride;

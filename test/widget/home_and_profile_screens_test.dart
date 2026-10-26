@@ -1,3 +1,4 @@
+import 'package:carwashapp/app/theme/app_theme.dart';
 import 'package:carwashapp/core/storage/token_storage.dart';
 import 'package:carwashapp/features/about/screens/about_us_screen.dart';
 import 'package:carwashapp/features/auth/models/auth_user.dart';
@@ -9,9 +10,11 @@ import 'package:carwashapp/features/auth/viewmodels/auth_providers.dart';
 import 'package:carwashapp/features/home/screens/customer_home_screen.dart';
 import 'package:carwashapp/features/home/views/home_screen.dart';
 import 'package:carwashapp/features/home/widgets/featured_offers.dart';
+import 'package:carwashapp/features/home/widgets/home_quick_actions.dart';
+import 'package:carwashapp/features/home/widgets/home_recent_services_section.dart';
+import 'package:carwashapp/features/home/widgets/home_vehicle_section.dart';
 import 'package:carwashapp/features/home/widgets/loyalty_card.dart';
 import 'package:carwashapp/features/home/widgets/promotional_banner.dart';
-import 'package:carwashapp/features/home/widgets/service_categories.dart';
 import 'package:carwashapp/features/profile/screens/profile_screen.dart';
 import 'package:carwashapp/features/services/models/service_item.dart';
 import 'package:carwashapp/features/services/viewmodels/service_providers.dart';
@@ -19,6 +22,23 @@ import 'package:carwashapp/features/support/screens/whatsapp_support_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'package:carwashapp/features/vehicles/models/vehicle.dart';
+import 'package:carwashapp/features/vehicles/viewmodels/vehicle_providers.dart';
+import 'package:carwashapp/features/vehicles/viewmodels/vehicle_viewmodel.dart';
+import 'package:carwashapp/features/visits/models/service_visit.dart';
+import 'package:carwashapp/features/visits/viewmodels/visit_providers.dart';
+import 'package:carwashapp/features/visits/viewmodels/visit_viewmodel.dart';
+
+class _FakeVehicleViewModel extends VehicleViewModel {
+  @override
+  Future<List<Vehicle>> build() async => const [];
+}
+
+class _FakeVisitViewModel extends VisitViewModel {
+  @override
+  Future<List<ServiceVisit>> build() async => const [];
+}
 
 const testUser = AuthUser(
   id: 1,
@@ -29,6 +49,8 @@ const testUser = AuthUser(
   isActive: true,
   firstName: 'Ahmed',
   lastName: 'Al-Mansoor',
+  loyaltyPoints: 2450,
+  membershipTier: 'GOLD',
 );
 
 void main() {
@@ -84,41 +106,56 @@ void main() {
       },
     );
 
-    testWidgets('HomeScreen renders all 6 required sections properly', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            customerServicesProvider.overrideWith((ref) => mockServices),
-          ],
-          child: const MaterialApp(home: HomeScreen(user: testUser)),
-        ),
-      );
+    testWidgets(
+      'HomeScreen renders streamlined sections and 4 quick actions properly',
+      (tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              customerServicesProvider.overrideWith((ref) => mockServices),
+              vehicleViewModelProvider.overrideWith(
+                () => _FakeVehicleViewModel(),
+              ),
+              visitViewModelProvider.overrideWith(() => _FakeVisitViewModel()),
+            ],
+            child: const MaterialApp(home: HomeScreen(user: testUser)),
+          ),
+        );
 
-      await tester.pump();
+        await tester.pump();
 
-      // Greeting with user name
-      expect(find.text('Good Day,'), findsOneWidget);
-      expect(find.text('Ahmed Al-Mansoor'), findsWidgets);
+        // 1. HomeHeader: Greeting with user name
+        expect(find.text('Good Day,'), findsOneWidget);
+        expect(find.text('Ahmed Al-Mansoor'), findsWidgets);
 
-      // Loyalty Card
-      expect(find.byType(LoyaltyCard), findsOneWidget);
-      expect(find.text('GOLD MEMBER'), findsOneWidget);
-      expect(find.text('AVAILABLE BALANCE'), findsOneWidget);
-      expect(find.text('2,450'), findsOneWidget);
+        // 2. LoyaltyCard: Tier & coins
+        expect(find.byType(LoyaltyCard), findsOneWidget);
+        expect(find.text('GOLD MEMBER'), findsOneWidget);
+        expect(find.text('AVAILABLE BALANCE'), findsOneWidget);
+        expect(find.text('2,450'), findsOneWidget);
 
-      // Service Categories
-      expect(find.byType(ServiceCategories), findsOneWidget);
-      expect(find.text('Our Services'), findsOneWidget);
+        // 3. Quick Actions: 7 Service Shortcuts + More + Header
+        expect(find.byType(HomeQuickActions), findsOneWidget);
+        expect(find.text('Our Services'), findsOneWidget);
+        expect(find.text('Tyre Services'), findsOneWidget);
+        expect(find.text('Auto Repair'), findsOneWidget);
+        expect(find.text('Oil & Battery'), findsOneWidget);
+        expect(find.text('Car Wash'), findsOneWidget);
+        expect(find.text('Ceramic Coating'), findsOneWidget);
+        expect(find.text('AC Servicing'), findsOneWidget);
+        expect(find.text('Car Painting'), findsOneWidget);
+        expect(find.text('More'), findsOneWidget);
 
-      // Promotional Banner
-      expect(find.byType(PromotionalBanner), findsOneWidget);
+        // 4. Promotional Banner & Featured Offers directly below
+        expect(find.byType(PromotionalBanner), findsOneWidget);
+        expect(find.byType(FeaturedOffers), findsOneWidget);
+        expect(find.text('Featured Offers'), findsOneWidget);
 
-      // Featured Offers
-      expect(find.byType(FeaturedOffers), findsOneWidget);
-      expect(find.text('Featured Offers'), findsOneWidget);
-    });
+        // 5. Removed Sections: My Vehicles and Recent Services are completely removed from Home
+        expect(find.byType(HomeVehicleSection), findsNothing);
+        expect(find.byType(HomeRecentServicesSection), findsNothing);
+      },
+    );
 
     testWidgets('LoyaltyCard displays configurable points, tier and progress', (
       tester,
@@ -194,6 +231,7 @@ void main() {
               authServiceProvider.overrideWithValue(fakeAuthService),
             ],
             child: MaterialApp(
+              theme: AppTheme.lightTheme,
               home: Builder(
                 builder: (context) => Scaffold(
                   body: Center(

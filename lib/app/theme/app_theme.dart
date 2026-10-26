@@ -7,20 +7,21 @@ abstract class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      splashFactory: InkRipple.splashFactory,
       brightness: Brightness.light,
       fontFamily: AppTextStyles.bodyFont,
-      primaryColor: AppColors.deepCharcoal,
-      scaffoldBackgroundColor: AppColors.warmPorcelain,
+      primaryColor: AppColors.deepBlack,
+      scaffoldBackgroundColor: AppColors.pureWhite,
 
       // Global Component Token Mapping
       colorScheme: const ColorScheme.light(
-        primary: AppColors.deepCharcoal,
+        primary: AppColors.deepBlack,
         secondary: AppColors.champagneGold,
-        surface: AppColors.warmPorcelain,
+        surface: AppColors.pureWhite,
         error: AppColors.error,
         onPrimary: AppColors.pureWhite,
-        onSecondary: AppColors.deepCharcoal,
-        onSurface: AppColors.deepCharcoal,
+        onSecondary: AppColors.deepBlack,
+        onSurface: AppColors.deepBlack,
         onError: AppColors.pureWhite,
       ),
 
@@ -93,6 +94,7 @@ abstract class AppTheme {
       // Primary Button Layout Themes
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
+          splashFactory: InkRipple.splashFactory,
           backgroundColor: AppColors.deepCharcoal,
           foregroundColor: AppColors.pureWhite,
           textStyle: AppTextStyles.button,
@@ -102,6 +104,14 @@ abstract class AppTheme {
             borderRadius: BorderRadius.circular(10),
           ),
         ),
+      ),
+
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(splashFactory: InkRipple.splashFactory),
+      ),
+
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        splashColor: Colors.transparent,
       ),
 
       // Structural Card Frameworks

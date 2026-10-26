@@ -95,7 +95,10 @@ void main() {
         if (locationService != null)
           locationServiceProvider.overrideWithValue(locationService),
       ],
-      child: MaterialApp(home: child ?? const BranchMapScreen()),
+      child: MaterialApp(
+        theme: ThemeData(splashFactory: InkRipple.splashFactory),
+        home: child ?? const BranchMapScreen(),
+      ),
     );
   }
 

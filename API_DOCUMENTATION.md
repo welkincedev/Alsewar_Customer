@@ -41,11 +41,13 @@ Base URL in local development: `http://localhost:8000`
      - [Manager Cross-Branch Vehicle History (`/api/manager/vehicles/{id}/history/`)](#736-manager-cross-branch-vehicle-service-history)
    - [Customer Self-Service Vehicle Access (`/api/customer/vehicles/`)](#74-customer-self-service-vehicle-access)
      - [Customer Vehicle Service History (`/api/customer/vehicles/{id}/history/`)](#744-customer-vehicle-service-history)
+   - [Customer Profile Management & Profile Picture (`/api/customer/profile/`)](#75-customer-profile-management--profile-picture)
 8. [Service Catalogue & Branch Services Module API Reference](#8-service-catalogue--branch-services-module-api-reference)
-   - [Admin Service Catalogue Management (`/api/admin/services/`)](#81-admin-service-catalogue-management)
-   - [Admin Branch Service Assignments (`/api/admin/branch-services/`)](#82-admin-branch-service-assignments)
-   - [Manager Branch Services (`/api/manager/branch/services/`)](#83-manager-branch-services)
-   - [Customer Service Browsing (`/api/customer/services/`)](#84-customer-service-browsing)
+   - [Admin Service Category Management (`/api/admin/service-categories/`)](#81-admin-service-category-management)
+   - [Admin Service Catalogue Management (`/api/admin/services/`)](#82-admin-service-catalogue-management)
+   - [Admin Branch Service Assignments (`/api/admin/branch-services/`)](#83-admin-branch-service-assignments)
+   - [Manager Branch Services (`/api/manager/branch/services/`)](#84-manager-branch-services)
+   - [Customer Service Categories & Browsing (`/api/customer/`)](#85-customer-service-categories--browsing)
 9. [Service Visits & Service Status Workflow Module API Reference](#9-service-visits--service-status-workflow-module-api-reference)
    - [Overview & Walk-In Operational Workflow](#91-overview--walk-in-operational-workflow)
    - [Admin Service Status Stage Configuration (`/api/admin/stages/`)](#92-admin-service-status-stage-configuration)
@@ -70,8 +72,13 @@ Base URL in local development: `http://localhost:8000`
    - [Manager Device & Notification Endpoints (`/api/manager/`)](#124-manager-device--notification-endpoints)
    - [Unified Authenticated Endpoints (`/api/notifications/`)](#125-unified-authenticated-endpoints)
    - [Admin Device & Dispatch Oversight (`/api/admin/`)](#126-admin-device--dispatch-oversight)
-13. [Database Migrations & Test Verification](#13-database-migrations--test-verification)
-14. [Frontend Integration Guide (Axios Example)](#14-frontend-integration-guide-axios-example)
+13. [Banner Management Module API Reference](#13-banner-management-module-api-reference)
+   - [Overview & Multi-App Distribution](#131-overview--multi-app-distribution)
+   - [Admin Banner Management (`/api/admin/banners/`)](#132-admin-banner-management)
+   - [Customer Promotional Banners (`/api/customer/banners/`)](#133-customer-promotional-banners)
+   - [Manager Announcements & Banners (`/api/manager/banners/`)](#134-manager-announcements--banners)
+14. [Database Migrations & Test Verification](#14-database-migrations--test-verification)
+15. [Frontend Integration Guide (Axios Example)](#15-frontend-integration-guide-axios-example)
 
 ---
 
@@ -106,6 +113,7 @@ All user-returning endpoints return the following standardized user object struc
 | `phone` | `string` or `null` | Phone number (unique if provided, or `null`). |
 | `first_name` | `string` | User's first name. |
 | `last_name` | `string` | User's last name. |
+| `profile_picture` | `string` or `null` | Absolute URL to customer profile picture (or `null` if none uploaded). |
 | `is_active` | `boolean` | `true` if account is active, `false` if deactivated. |
 
 **Example User Object:**
@@ -118,6 +126,7 @@ All user-returning endpoints return the following standardized user object struc
   "phone": "9876543210",
   "first_name": "Sarah",
   "last_name": "Khan",
+  "profile_picture": "http://192.168.1.2:8001/media/profile_pictures/customer_12/3fa85f64-5717-4562-b3fc-2c963f66afa6.jpg",
   "is_active": true
 }
 ```
@@ -553,9 +562,12 @@ Authorization: Bearer <access_token>
   "phone": "9876543210",
   "first_name": "John",
   "last_name": "Doe",
+  "profile_picture": "http://192.168.1.2:8001/media/profile_pictures/customer_15/8e4df45e-bf33-4f18-b2ef-3eaee50df7a2.jpg",
   "is_active": true
 }
 ```
+
+> **Note on Profile Picture:** If the customer has uploaded a profile picture via `/api/customer/profile/`, an absolute URL is returned in `profile_picture`. If no picture has been uploaded, `profile_picture` is `null`.
 
 ---
 
@@ -633,6 +645,7 @@ Blacklists the refresh token so it cannot be used again.
     "address": "Sheikh Zayed Road, Building 4",
     "city": "Dubai",
     "phone": "+97141234567",
+    "whatsapp_number": "+96891234567",
     "email": "downtown@alsewar.com",
     "latitude": "25.2048493",
     "longitude": "55.2707828",
@@ -659,6 +672,7 @@ Blacklists the refresh token so it cannot be used again.
   "address": "Sheikh Zayed Road, Building 4",
   "city": "Dubai",
   "phone": "+97141234567",
+  "whatsapp_number": "+96891234567",
   "email": "downtown@alsewar.com",
   "latitude": 25.2048493,
   "longitude": 55.2707828,
@@ -668,6 +682,7 @@ Blacklists the refresh token so it cannot be used again.
 * **Validation Rules:**
   * `name`, `code`, `address`, `city`: Required, non-empty.
   * `code`: Must be unique across all branches (case-insensitive).
+  * `whatsapp_number`: Optional string in international format (e.g. `+96891234567`), or blank for branches without WhatsApp.
   * `latitude`: Optional decimal between `-90.0` and `90.0`.
   * `longitude`: Optional decimal between `-180.0` and `180.0`.
 * **Success Response (`201 Created`):**
@@ -679,6 +694,7 @@ Blacklists the refresh token so it cannot be used again.
   "address": "Sheikh Zayed Road, Building 4",
   "city": "Dubai",
   "phone": "+97141234567",
+  "whatsapp_number": "+96891234567",
   "email": "downtown@alsewar.com",
   "latitude": "25.2048493",
   "longitude": "55.2707828",
@@ -691,6 +707,7 @@ Blacklists the refresh token so it cannot be used again.
 ```json
 {
   "code": ["A branch with this code already exists."],
+  "whatsapp_number": ["WhatsApp number must be in international format (e.g. +96891234567)."],
   "latitude": ["Latitude must be between -90 and 90 degrees."]
 }
 ```
@@ -708,7 +725,8 @@ Blacklists the refresh token so it cannot be used again.
 ```json
 {
   "name": "Dubai Downtown Flagship",
-  "phone": "+97149998888"
+  "phone": "+97149998888",
+  "whatsapp_number": "+96898765432"
 }
 ```
 * **Success Response (`200 OK`):** Returns updated branch object.
@@ -728,6 +746,7 @@ Blacklists the refresh token so it cannot be used again.
     "address": "Sheikh Zayed Road, Building 4",
     "city": "Dubai",
     "phone": "+97149998888",
+    "whatsapp_number": "+96898765432",
     "email": "downtown@alsewar.com",
     "latitude": "25.2048493",
     "longitude": "55.2707828",
@@ -971,6 +990,7 @@ All customer branch endpoints require customer authentication (`IsAuthenticated`
     "address": "Sheikh Zayed Road, Building 4",
     "city": "Dubai",
     "phone": "+97141234567",
+    "whatsapp_number": "+96891234567",
     "email": "downtown@alsewar.com",
     "latitude": "25.2048493",
     "longitude": "55.2707828",
@@ -982,7 +1002,22 @@ All customer branch endpoints require customer authentication (`IsAuthenticated`
 #### 5.4.2 Retrieve Active Branch Detail
 * **Method & URL:** `GET /api/customer/branches/<id>/` (or without trailing slash)
 * **Access:** `IsAuthenticated` + `IsCustomerRole`
-* **Success Response (`HTTP 200 OK`):** Returns single branch object.
+* **Success Response (`HTTP 200 OK`):**
+```json
+{
+  "id": 1,
+  "name": "Dubai Downtown Branch",
+  "code": "DXB-DT-01",
+  "address": "Sheikh Zayed Road, Building 4",
+  "city": "Dubai",
+  "phone": "+97141234567",
+  "whatsapp_number": "+96891234567",
+  "email": "downtown@alsewar.com",
+  "latitude": "25.2048493",
+  "longitude": "55.2707828",
+  "is_active": true
+}
+```
 * **Error Response (`HTTP 404 Not Found`):** If branch does not exist or `is_active=False`.
 
 #### 5.4.3 Retrieve Branch Operating Hours
@@ -1037,6 +1072,7 @@ Branch managers use these endpoints to securely view their assigned store detail
   "address": "Sheikh Zayed Road, Building 4",
   "city": "Dubai",
   "phone": "+97141234567",
+  "whatsapp_number": "+96891234567",
   "email": "downtown@alsewar.com",
   "latitude": "25.2048493",
   "longitude": "55.2707828",
@@ -1701,21 +1737,478 @@ Customers can register a new vehicle under their own account. The owner is autom
 
 ---
 
+### 7.5 Customer Profile Management & Profile Picture
+
+Comprehensive profile viewing, personal detail updating, and profile picture management for authenticated customers via the Customer Mobile App and Web Portal.
+
+#### Overview & Security Enforcement
+* **Authentication:** JWT Bearer Token (`Authorization: Bearer <customer_access_token>`).
+* **Permissions:** Restricted to customers (`IsAuthenticated` + `IsCustomerRole`). Unauthenticated requests return `HTTP 401 Unauthorized`. Non-customer roles (Manager, Admin) return `HTTP 403 Forbidden`.
+* **Zero Target Spoofing:** Endpoints always resolve the profile strictly via `request.user`. The backend rejects query parameters or request body fields attempting to specify another customer ID.
+* **Strict Allowlist:** Only `first_name`, `last_name`, `email`, and `profile_picture` can be modified. Protected fields (`id`, `username`, `phone`, `role`, `is_active`, `is_staff`, `is_superuser`, `password`, `registered_branch`, `created_at`, `date_joined`) are strictly read-only and ignored if sent.
+
+---
+
+#### 7.5.1 Get Customer Profile
+Fetches the authenticated customer's full profile, including user account info, registered branch details, and profile picture.
+
+* **URL:** `GET /api/customer/profile/` (and `/api/customer/profile`)
+* **Access:** **Customer only** (`IsCustomerRole`)
+* **Headers:**
+  ```http
+  Authorization: Bearer <customer_access_token>
+  ```
+
+##### Success Response (`HTTP 200 OK`):
+```json
+{
+  "id": 15,
+  "username": "salman_k",
+  "first_name": "Salman",
+  "last_name": "Khan",
+  "email": "salman@example.com",
+  "phone": "+96891234567",
+  "role": "CUSTOMER",
+  "profile_picture": "http://192.168.1.2:8001/media/profile_pictures/customer_15/8e4df45e-bf33-4f18-b2ef-3eaee50df7a2.jpg",
+  "registered_branch": {
+    "id": 1,
+    "name": "Al Sewar Muscat Main Branch",
+    "code": "MCT01",
+    "city": "Muscat"
+  },
+  "created_at": "2026-10-10T11:00:00Z"
+}
+```
+
+*Note:* If no picture has been uploaded, `"profile_picture": null`. If the customer was registered without an assigned branch, `"registered_branch": null`.
+
+##### Error Responses:
+* `HTTP 401 Unauthorized`:
+  ```json
+  {
+    "detail": "Authentication credentials were not provided."
+  }
+  ```
+* `HTTP 403 Forbidden`:
+  ```json
+  {
+    "detail": "Access denied for this role portal."
+  }
+  ```
+
+---
+
+#### 7.5.2 Update Customer Profile & Upload Picture
+Allows customers to update their name, email address, and upload or replace their profile picture.
+
+* **URL:** `PATCH /api/customer/profile/` (and `/api/customer/profile`)
+* **Access:** **Customer only** (`IsCustomerRole`)
+* **Headers:**
+  * For text-only updates:
+    ```http
+    Authorization: Bearer <customer_access_token>
+    Content-Type: application/json
+    ```
+  * For image upload / multipart updates:
+    ```http
+    Authorization: Bearer <customer_access_token>
+    Content-Type: multipart/form-data
+    ```
+
+##### Field Specifications:
+| Field | Type | Formats / Constraints | Allowed in Multipart? | Allowed in JSON? |
+|---|---|---|---|---|
+| `first_name` | `string` | Optional, max 150 chars. | Yes | Yes |
+| `last_name` | `string` | Optional, max 150 chars. | Yes | Yes |
+| `email` | `string` | Optional, valid email syntax, unique across accounts. | Yes | Yes |
+| `profile_picture` | `file` | Optional, JPEG, PNG, or WEBP. Max size: 2 MB. | Yes (`multipart/form-data`) | No (use multipart) |
+
+##### Read-Only / Protected Fields (Ignored if provided):
+`id`, `username`, `phone`, `role`, `is_active`, `is_staff`, `is_superuser`, `password`, `registered_branch`, `created_at`, `date_joined`.
+
+##### Profile Picture Validation & Storage Rules:
+* **True Content Verification:** Validates actual binary content using Pillow (`Image.open(file).verify()`), not just the filename extension or HTTP `Content-Type`.
+* **Allowed Image Formats:** JPEG, PNG, WEBP.
+* **Maximum File Size:** 2 MB (`2,097,152 bytes`). Files exceeding 2 MB return `HTTP 400 Bad Request`.
+* **Safe Storage Path:** `profile_pictures/customer_{user_id}/{uuid}.{ext}`.
+* **Old File Cleanup:** When a customer uploads a replacement picture, the previous image file is automatically and safely purged from disk storage upon successful database update.
+* **Safe Error Handling:** If validation fails, no file is saved to storage and the existing profile picture remains untouched.
+
+##### Example 1: Updating Name and Email (JSON Request):
+```http
+PATCH /api/customer/profile/
+Authorization: Bearer <customer_access_token>
+Content-Type: application/json
+
+{
+  "first_name": "Salman",
+  "last_name": "Al Balushi",
+  "email": "salman.albalushi@example.com"
+}
+```
+
+##### Example 2: Uploading / Replacing Profile Picture (Multipart Request):
+```http
+PATCH /api/customer/profile/
+Authorization: Bearer <customer_access_token>
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="first_name"
+
+Salman
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="profile_picture"; filename="avatar.jpg"
+Content-Type: image/jpeg
+
+<binary image data>
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+```
+
+##### Success Response (`HTTP 200 OK`):
+```json
+{
+  "id": 15,
+  "username": "salman_k",
+  "first_name": "Salman",
+  "last_name": "Al Balushi",
+  "email": "salman.albalushi@example.com",
+  "phone": "+96891234567",
+  "role": "CUSTOMER",
+  "profile_picture": "http://192.168.1.2:8001/media/profile_pictures/customer_15/e4b6d34e-0012-4f3b-871d-76495b59a68c.jpg",
+  "registered_branch": {
+    "id": 1,
+    "name": "Al Sewar Muscat Main Branch",
+    "code": "MCT01",
+    "city": "Muscat"
+  },
+  "created_at": "2026-10-10T11:00:00Z"
+}
+```
+
+##### Error Responses:
+* `HTTP 400 Bad Request` — Image size exceeds 2 MB:
+  ```json
+  {
+    "profile_picture": [
+      "Profile picture file size cannot exceed 2 MB. Uploaded size is 3.42 MB."
+    ]
+  }
+  ```
+* `HTTP 400 Bad Request` — Corrupt or non-image file:
+  ```json
+  {
+    "profile_picture": [
+      "Upload a valid image. The file you submitted is corrupted or not an image."
+    ]
+  }
+  ```
+* `HTTP 400 Bad Request` — Unsupported image format (e.g. GIF, BMP, TIFF):
+  ```json
+  {
+    "profile_picture": [
+      "Unsupported image format: GIF. Allowed formats are JPEG, PNG, WEBP."
+    ]
+  }
+  ```
+* `HTTP 400 Bad Request` — Email already taken by another account:
+  ```json
+  {
+    "email": [
+      "A user with this email already exists."
+    ]
+  }
+  ```
+
+---
+
+#### 7.5.3 Remove Customer Profile Picture
+Removes the current customer profile picture from the database and safely deletes the image file from storage.
+
+* **URL:** `DELETE /api/customer/profile/picture/` (and `/api/customer/profile/picture`)
+* **Access:** **Customer only** (`IsCustomerRole`)
+* **Headers:**
+  ```http
+  Authorization: Bearer <customer_access_token>
+  ```
+
+##### Success Response (`HTTP 200 OK`):
+```json
+{
+  "detail": "Profile picture removed successfully.",
+  "profile": {
+    "id": 15,
+    "username": "salman_k",
+    "first_name": "Salman",
+    "last_name": "Al Balushi",
+    "email": "salman.albalushi@example.com",
+    "phone": "+96891234567",
+    "role": "CUSTOMER",
+    "profile_picture": null,
+    "registered_branch": {
+      "id": 1,
+      "name": "Al Sewar Muscat Main Branch",
+      "code": "MCT01",
+      "city": "Muscat"
+    },
+    "created_at": "2026-10-10T11:00:00Z"
+  }
+}
+```
+
+*Predictable idempotency:* If the customer calls this endpoint when no picture is set, the API responds with `HTTP 200 OK` and `"detail": "No profile picture was set."` without errors.
+
+---
+
+#### 7.5.4 Postman Profile Picture Upload Instructions
+
+1. **Method & URL:** Set method to `PATCH` and URL to `http://127.0.0.1:8001/api/customer/profile/`.
+2. **Authorization:** In the **Auth** tab, choose **Bearer Token** and paste the customer's JWT access token.
+3. **Body Configuration:**
+   - Under the **Body** tab, select **form-data**.
+   - In the **Key** field, type `profile_picture`.
+   - Hover over the right edge of the key input and change the type dropdown from **Text** to **File**.
+   - In the **Value** column, click **Select Files** and choose a `.jpg`, `.png`, or `.webp` file under 2 MB.
+   - *(Optional)* Add other keys: `first_name`, `last_name`, `email` with **Text** type.
+4. **Headers:** Do **not** manually set `Content-Type`. Postman will automatically generate `multipart/form-data; boundary=...`.
+5. **Send:** Click **Send**. The response contains the updated profile with the full `profile_picture` URL.
+
+---
+
+#### 7.5.5 Mobile App Integration Notes (React Native & Flutter)
+
+##### React Native (Axios & FormData):
+```javascript
+import axios from 'axios';
+
+export async function uploadProfilePicture(token, imageUri, imageType = 'image/jpeg') {
+  const formData = new FormData();
+  formData.append('profile_picture', {
+    uri: imageUri,
+    name: 'profile.jpg',
+    type: imageType,
+  });
+
+  const response = await axios.patch('http://192.168.1.2:8001/api/customer/profile/', formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data;
+}
+```
+
+##### Flutter (Dio):
+```dart
+import 'package:dio/dio.dart';
+
+Future<Response> uploadProfilePicture(String token, String filePath) async {
+  var dio = Dio();
+  dio.options.headers["Authorization"] = "Bearer $token";
+
+  FormData formData = FormData.fromMap({
+    "profile_picture": await MultipartFile.fromFile(filePath, filename: "avatar.jpg"),
+  });
+
+  return await dio.patch("http://192.168.1.2:8001/api/customer/profile/", data: formData);
+}
+```
+
+##### Mobile Best Practices:
+1. **Client-side Compression:** Always resize user avatar photos (e.g. to max 1024x1024) and compress (e.g. 80% JPEG quality) before uploading to save mobile bandwidth and avoid exceeding the 2 MB limit.
+2. **Cache Busting:** Because filenames contain unique UUIDs on every upload, images naturally invalidate cached URLs on the mobile client.
+3. **Network URL Configuration:** In mobile development using physical devices or emulators, ensure `MEDIA_URL` uses your LAN IP (e.g., `http://192.168.1.2:8001/media/...`) rather than `localhost`.
+
+---
+
 ---
 
 ## 8. Service Catalogue & Branch Services Module API Reference
 
-### 8.1 Admin Service Catalogue Management
+### 8.0 Overview, Architecture & Lifecycle Workflow
+
+#### 8.0.1 Architecture & Separation of Concerns
+* **Admin Role (`ADMIN`):**
+  * Maintains dynamic service categories (create, view, update, soft-deactivate). Category names are dynamically managed and never hardcoded.
+  * Maintains the global service catalogue (create, view, update, deactivate services). Each service belongs to a mandatory active category upon creation.
+  * Assigns services to branches and manages per-branch availability flags (`is_available`).
+* **Manager Role (`MANAGER`):**
+  * View-only access strictly scoped to the authenticated manager's assigned branch (`get_manager_assigned_branch`).
+  * Views services available at their branch with category metadata (`category_id`, `category_name`) and optional category filtering (`?category={id}`).
+* **Customer Role (`CUSTOMER`):**
+  * Browses active service categories (`GET /api/customer/service-categories/`) with active services count and pre-populated service list.
+  * Browses active services in the global catalogue or lists available services offered at a specific active branch, with optional category filtering (`?category={id}`).
+  * Inactive categories and services assigned to inactive categories are automatically hidden from customer visibility.
+* **Explicit Exclusions:**
+  * No online bookings, time-slot scheduling, job cards/service visits, invoices, Odoo integration, base/branch pricing, loyalty points redemption, or subcategories in this phase.
+
+#### 8.0.2 End-to-End Service Lifecycle Workflow
+1. **Admin Creates a Service Category:** Admin creates a dynamic category (e.g. "Mechanical", "Body Services", "Detailing") with a display order and description (`POST /api/admin/service-categories/`).
+2. **Admin Creates a Service:** Admin creates a service and selects an existing active category (`POST /api/admin/services/`). Category selection is mandatory.
+3. **Admin Allocates Service to Branch:** Admin links the service to one or more branches (`POST /api/admin/branch-services/`) and toggles branch-specific availability (`is_available`).
+4. **Customer App Discovers Categories & Services:** Customer fetches active categories (`GET /api/customer/service-categories/`) and browses services globally or per branch filtered by category (`GET /api/customer/services/?category={id}`).
+5. **Manager App Inspects Branch Offerings:** Manager reviews services available at their assigned branch filtered by category (`GET /api/manager/branch/services/?category={id}`).
+
+#### 8.0.3 Backward Compatibility & Data Protection
+* **Legacy Service Records Preserved:** Existing service records created prior to category introduction are fully preserved.
+* **Uncategorized Services Supported:** Legacy services with `category = null` remain viewable, assignable to branches, and updateable (e.g., modifying descriptions or active flags) without forcing immediate category assignment.
+* **Non-Destructive Deactivation:** Soft-deactivating a category (`DELETE /api/admin/service-categories/{id}/`) sets `is_active = false`. It **never** hard-deletes the category, and does **not** delete or detach any associated services.
+* **Existing Allocations & Visits Intact:** All existing `BranchService`, `ServiceVisit`, and `VisitService` records remain completely unaffected.
+* **Additive API Design:** All previous API endpoint URLs, request methods, and response fields remain 100% unchanged. Category fields (`category`, `category_details`, `category_id`, `category_name`) are purely additive.
+
+---
+
+### 8.0.4 `ServiceCategory` Model & Field Specification
+
+Model: `app.services.models.ServiceCategory`  
+Serializer: `app.services.admin.serializers.AdminServiceCategorySerializer`
+
+| Field | Type | Required | Read-Only | Description |
+|---|---|---|---|---|
+| `id` | `integer` | System | **Yes** | Primary key. |
+| `name` | `string` | **Yes** | No | Unique category name (max 100 characters). Automatically trimmed; duplicate names (case-insensitive) are rejected. |
+| `description` | `string` | No | No | Optional description of services grouped under this category. Defaults to empty string `""`. |
+| `display_order` | `integer` | No | No | Positive integer used to control presentation sequence (lowest first). Defaults to `0`. |
+| `is_active` | `boolean` | No | No | Category status flag. Defaults to `true`. Deactivation hides category offerings from customers. |
+| `services_count` | `integer` | System | **Yes** | Total count of services currently assigned to this category. |
+| `created_at` | `datetime` | System | **Yes** | Timestamp of creation (ISO 8601, UTC). |
+| `updated_at` | `datetime` | System | **Yes** | Timestamp of last modification (ISO 8601, UTC). |
+
+---
+
+### 8.1 Admin Service Category Management
+
+Allows administrators to dynamically define, view, edit, and soft-deactivate service categories.
+
+#### 8.1.1 List & Search Categories
+* **URL:** `GET /api/admin/service-categories/`
+* **Access:** **Admin only** (`IsAdminRole`)
+* **Headers:** `Authorization: Bearer <admin_access_token>`
+* **Query Parameters:**
+  * `search` *(optional)*: Case-insensitive search across category `name` or `description`.
+  * `is_active` *(optional)*: Filter by active status (`true` / `1` or `false` / `0`).
+* **Ordering:** Ordered by `display_order` ascending, then `name` ascending.
+* **Success Response (`HTTP 200 OK`):**
+  ```json
+  [
+    {
+      "id": 1,
+      "name": "Mechanical",
+      "description": "Engine, transmission, and chassis maintenance",
+      "display_order": 1,
+      "is_active": true,
+      "services_count": 4,
+      "created_at": "2026-10-23T10:00:00Z",
+      "updated_at": "2026-10-23T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Body Services",
+      "description": "Dent repair, panel beatings, and spray painting",
+      "display_order": 2,
+      "is_active": true,
+      "services_count": 2,
+      "created_at": "2026-10-23T10:05:00Z",
+      "updated_at": "2026-10-23T10:05:00Z"
+    }
+  ]
+  ```
+
+#### 8.1.2 Create Category
+* **URL:** `POST /api/admin/service-categories/`
+* **Access:** **Admin only** (`IsAdminRole`)
+* **Headers:** `Authorization: Bearer <admin_access_token>`, `Content-Type: application/json`
+* **Request Body:**
+  ```json
+  {
+    "name": "Detailing & Protection",
+    "description": "Ceramic coating, paint protection film, and interior valet",
+    "display_order": 3,
+    "is_active": true
+  }
+  ```
+  | Field | Type | Required | Description |
+  |---|---|---|---|
+  | `name` | `string` | **Yes** | Category name (must be unique). |
+  | `description` | `string` | No | Optional description. |
+  | `display_order` | `integer` | No | Display sequence (default `0`). |
+  | `is_active` | `boolean` | No | Active toggle (default `true`). |
+
+* **Success Response (`HTTP 201 Created`):**
+  ```json
+  {
+    "id": 3,
+    "name": "Detailing & Protection",
+    "description": "Ceramic coating, paint protection film, and interior valet",
+    "display_order": 3,
+    "is_active": true,
+    "services_count": 0,
+    "created_at": "2026-10-23T10:20:00Z",
+    "updated_at": "2026-10-23T10:20:00Z"
+  }
+  ```
+* **Validation & Errors:**
+  * `HTTP 400 Bad Request` (Duplicate): `{"name": ["A category with this name already exists."]}`
+  * `HTTP 400 Bad Request` (Empty name): `{"name": ["Category name cannot be empty."]}`
+  * `HTTP 401 Unauthorized`: Missing or invalid Bearer token.
+  * `HTTP 403 Forbidden`: Authenticated user is not an administrator.
+
+#### 8.1.3 Get Category Detail
+* **URL:** `GET /api/admin/service-categories/{id}/`
+* **Access:** **Admin only** (`IsAdminRole`)
+* **Success Response (`HTTP 200 OK`):** Returns single category object with `services_count`.
+* **Errors:** `HTTP 404 Not Found` if category does not exist.
+
+#### 8.1.4 Update Category (Full PUT / Partial PATCH)
+* **URL:** `PUT /api/admin/service-categories/{id}/` or `PATCH /api/admin/service-categories/{id}/`
+* **Access:** **Admin only** (`IsAdminRole`)
+* **Request Body (Example PATCH):**
+  ```json
+  {
+    "display_order": 1,
+    "description": "Updated high-priority mechanical repair section"
+  }
+  ```
+* **Success Response (`HTTP 200 OK`):** Returns updated category object.
+* **Errors:** `HTTP 400 Bad Request` on validation failure, `HTTP 404 Not Found` if ID does not exist.
+
+#### 8.1.5 Soft-Deactivate Category (DELETE)
+* **URL:** `DELETE /api/admin/service-categories/{id}/`
+* **Access:** **Admin only** (`IsAdminRole`)
+* **Behavior:** Safely sets `is_active = false`. Does **not** hard-delete the category record and does **not** delete or detach any associated services.
+* **Success Response (`HTTP 200 OK`):**
+  ```json
+  {
+    "detail": "Category deactivated successfully.",
+    "category": {
+      "id": 1,
+      "name": "Mechanical",
+      "description": "Engine, transmission, and chassis maintenance",
+      "display_order": 1,
+      "is_active": false,
+      "services_count": 4,
+      "created_at": "2026-10-23T10:00:00Z",
+      "updated_at": "2026-10-23T10:30:00Z"
+    }
+  }
+  ```
+
+---
+
+### 8.2 Admin Service Catalogue Management
 
 Allows administrators to define and maintain the global catalogue of automotive repair and maintenance services.
 
-#### 8.1.1 List & Search Services
+#### 8.2.1 List & Search Services
 * **URL:** `GET /api/admin/services/` (or `GET /api/admin/services`)
 * **Access:** **Admin only** (`IsAdminRole`)
 * **Headers:** `Authorization: Bearer <admin_access_token>`
 * **Query Parameters:**
   * `search` *(optional)*: Search term matching service `name` or `description`.
   * `is_active` *(optional)*: Filter by active status (`true` or `false`).
+  * `category` / `category_id` *(optional)*: Filter services belonging to a specific category ID. Pass `none` or `0` for uncategorized.
 * **Success Response (`HTTP 200 OK`):**
   ```json
   [
@@ -1723,6 +2216,21 @@ Allows administrators to define and maintain the global catalogue of automotive 
       "id": 1,
       "name": "Oil & Filter Change",
       "description": "Full synthetic oil and OEM filter replacement",
+      "category": 1,
+      "category_details": {
+        "id": 1,
+        "name": "Mechanical"
+      },
+      "is_active": true,
+      "created_at": "2026-10-10T14:00:00Z",
+      "updated_at": "2026-10-23T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Legacy Brake Check",
+      "description": "Uncategorized legacy service record",
+      "category": null,
+      "category_details": null,
       "is_active": true,
       "created_at": "2026-10-10T14:00:00Z",
       "updated_at": "2026-10-10T14:00:00Z"
@@ -1730,33 +2238,108 @@ Allows administrators to define and maintain the global catalogue of automotive 
   ]
   ```
 
-#### 8.1.2 Create Service
+#### 8.2.2 Create Service
 * **URL:** `POST /api/admin/services/` (or `POST /api/admin/services`)
 * **Access:** **Admin only** (`IsAdminRole`)
 * **Headers:** `Authorization: Bearer <admin_access_token>`, `Content-Type: application/json`
+* **Validation Rules:**
+  * `category` is **mandatory** when creating a new service.
+  * The referenced category must exist and have `is_active = true`.
+  * Attempting to assign an inactive or nonexistent category returns `HTTP 400 Bad Request`.
 * **Request Body:**
   ```json
   {
     "name": "Wheel Alignment & Balancing",
     "description": "Computerized 3D 4-wheel alignment and high-speed wheel balancing",
+    "category": 1,
     "is_active": true
   }
   ```
-* **Success Response (`HTTP 201 Created`):** Returns the created service object.
-* **Errors:**
-  * `400 Bad Request`: Validation errors (e.g., duplicate name, missing name).
-  * `401 Unauthorized`: Missing or invalid Bearer token.
-  * `403 Forbidden`: User is not an admin.
+  | Field | Type | Required | Description |
+  |---|---|---|---|
+  | `name` | `string` | **Yes** | Unique service title. |
+  | `category` | `integer` | **Yes** | ID of an active `ServiceCategory`. |
+  | `description` | `string` | No | Optional service description. |
+  | `is_active` | `boolean` | No | Defaults to `true`. |
 
-#### 8.1.3 Get Service Detail
+* **Success Response (`HTTP 201 Created`):**
+  ```json
+  {
+    "id": 9,
+    "name": "Wheel Alignment & Balancing",
+    "description": "Computerized 3D 4-wheel alignment and high-speed wheel balancing",
+    "category": 1,
+    "category_details": {
+      "id": 1,
+      "name": "Mechanical"
+    },
+    "is_active": true,
+    "created_at": "2026-10-23T11:00:00Z",
+    "updated_at": "2026-10-23T11:00:00Z"
+  }
+  ```
+* **Errors:**
+  * `HTTP 400 Bad Request` (Missing Category): `{"category": ["Category is required when creating a service."]}`
+  * `HTTP 400 Bad Request` (Inactive Category): `{"category": ["Cannot assign a service to an inactive category."]}`
+  * `HTTP 400 Bad Request` (Invalid Category ID): `{"category": ["Invalid pk \"999\" - object does not exist."]}`
+  * `HTTP 400 Bad Request` (Duplicate Name): `{"name": ["A service with this name already exists."]}`
+  * `HTTP 401 Unauthorized`: Missing or invalid Bearer token.
+  * `HTTP 403 Forbidden`: User is not an admin.
+
+#### 8.2.3 Get Service Detail
 * **URL:** `GET /api/admin/services/{id}/`
 * **Access:** **Admin only** (`IsAdminRole`)
+* **Success Response (`HTTP 200 OK`):**
+  ```json
+  {
+    "id": 1,
+    "name": "Oil & Filter Change",
+    "description": "Full synthetic oil and OEM filter replacement",
+    "category": 1,
+    "category_details": {
+      "id": 1,
+      "name": "Mechanical"
+    },
+    "is_active": true,
+    "created_at": "2026-10-10T14:00:00Z",
+    "updated_at": "2026-10-23T10:00:00Z"
+  }
+  ```
+* **Errors:** `HTTP 404 Not Found` if service ID does not exist.
 
-#### 8.1.4 Update Service
+#### 8.2.4 Update Service (Full PUT / Partial PATCH)
 * **URL:** `PUT /api/admin/services/{id}/` (Full) or `PATCH /api/admin/services/{id}/` (Partial)
 * **Access:** **Admin only** (`IsAdminRole`)
+* **Behavior:**
+  * Admin can change a service's category by supplying a new active category ID.
+  * Existing uncategorized services (`category = null`) can be updated without passing `category`.
+  * If a service already has a category assigned, removing it (`"category": null`) is rejected.
+  * Assigning an inactive category is rejected with `HTTP 400 Bad Request`.
+* **Request Body (Example: Change Category via PATCH):**
+  ```json
+  {
+    "category": 2,
+    "description": "Updated description and moved under Body Services category"
+  }
+  ```
+* **Success Response (`HTTP 200 OK`):**
+  ```json
+  {
+    "id": 1,
+    "name": "Oil & Filter Change",
+    "description": "Updated description and moved under Body Services category",
+    "category": 2,
+    "category_details": {
+      "id": 2,
+      "name": "Body Services"
+    },
+    "is_active": true,
+    "created_at": "2026-10-10T14:00:00Z",
+    "updated_at": "2026-10-23T11:15:00Z"
+  }
+  ```
 
-#### 8.1.5 Deactivate Service
+#### 8.2.5 Deactivate Service (DELETE)
 * **URL:** `DELETE /api/admin/services/{id}/`
 * **Access:** **Admin only** (`IsAdminRole`)
 * **Behavior:** Safely deactivates the service (`is_active = false`).
@@ -1767,18 +2350,26 @@ Allows administrators to define and maintain the global catalogue of automotive 
     "service": {
       "id": 1,
       "name": "Oil & Filter Change",
-      "is_active": false
+      "description": "Full synthetic oil and OEM filter replacement",
+      "category": 1,
+      "category_details": {
+        "id": 1,
+        "name": "Mechanical"
+      },
+      "is_active": false,
+      "created_at": "2026-10-10T14:00:00Z",
+      "updated_at": "2026-10-23T11:20:00Z"
     }
   }
   ```
 
 ---
 
-### 8.2 Admin Branch Service Assignments
+### 8.3 Admin Branch Service Assignments
 
 Allows administrators to allocate specific services to branches and control per-branch availability.
 
-#### 8.2.1 List Branch Service Assignments
+#### 8.3.1 List Branch Service Assignments
 * **URL:** `GET /api/admin/branch-services/` (or `GET /api/admin/branch-services`)
 * **Access:** **Admin only** (`IsAdminRole`)
 * **Headers:** `Authorization: Bearer <admin_access_token>`
@@ -1804,6 +2395,8 @@ Allows administrators to allocate specific services to branches and control per-
         "id": 2,
         "name": "Brake Pad Inspection",
         "description": "Front and rear brake disc and pad inspection",
+        "category": 1,
+        "category_name": "Mechanical",
         "is_active": true
       },
       "is_available": true,
@@ -1813,22 +2406,22 @@ Allows administrators to allocate specific services to branches and control per-
   ]
   ```
 
-#### 8.2.2 Assign Service to Branch
+#### 8.3.2 Assign Service to Branch
 * **URL:** `POST /api/admin/branch-services/`
 * **Access:** **Admin only** (`IsAdminRole`)
 * **Request Body:**
   ```json
   {
     "branch": 1,
-    "service": 2,
+    "service": 9,
     "is_available": true
   }
   ```
 * **Success Response (`HTTP 201 Created`):** Returns the created branch-service assignment with nested `branch_details` and `service_details`.
 * **Errors:**
-  * `400 Bad Request`: If the service is already assigned to the branch or if branch/service IDs are invalid.
+  * `HTTP 400 Bad Request`: If the service is already assigned to the branch or if branch/service IDs are invalid (`{"service": ["This service is already assigned to this branch."]}`).
 
-#### 8.2.3 Update Branch Service Availability
+#### 8.3.3 Update Branch Service Availability
 * **URL:** `PATCH /api/admin/branch-services/{id}/`
 * **Access:** **Admin only** (`IsAdminRole`)
 * **Request Body:**
@@ -1837,8 +2430,9 @@ Allows administrators to allocate specific services to branches and control per-
     "is_available": false
   }
   ```
+* **Success Response (`HTTP 200 OK`):** Returns updated assignment object.
 
-#### 8.2.4 Remove Service from Branch
+#### 8.3.4 Remove Service from Branch
 * **URL:** `DELETE /api/admin/branch-services/{id}/`
 * **Access:** **Admin only** (`IsAdminRole`)
 * **Success Response (`HTTP 200 OK`):**
@@ -1850,16 +2444,17 @@ Allows administrators to allocate specific services to branches and control per-
 
 ---
 
-### 8.3 Manager Branch Services
+### 8.4 Manager Branch Services
 
 Allows branch managers to view the services offered by their assigned branch only.
 
-#### 8.3.1 List Services for Manager's Assigned Branch
-* **URL:** `GET /api/manager/branch/services/` (or `GET /api/manager/services/`)
+#### 8.4.1 List Services for Manager's Assigned Branch
+* **URL:** `GET /api/manager/branch/services/` (or alias `GET /api/manager/services/`)
 * **Access:** **Manager only** (`IsManagerRole`)
 * **Headers:** `Authorization: Bearer <manager_access_token>`
 * **Query Parameters:**
   * `search` *(optional)*: Search by service name or description.
+  * `category` / `category_id` *(optional)*: Filter services by category ID. Pass `none` or `0` for uncategorized.
   * `is_available` *(optional)*: Filter by `true` or `false`.
 * **Success Response (`HTTP 200 OK`):**
   ```json
@@ -1869,6 +2464,8 @@ Allows branch managers to view the services offered by their assigned branch onl
       "service_id": 2,
       "name": "Brake Pad Inspection",
       "description": "Front and rear brake disc and pad inspection",
+      "category_id": 1,
+      "category_name": "Mechanical",
       "is_available": true,
       "is_active": true,
       "branch_id": 1,
@@ -1879,54 +2476,121 @@ Allows branch managers to view the services offered by their assigned branch onl
   ]
   ```
 * **Errors:**
-  * `404 Not Found`: If the authenticated manager is not currently assigned to any branch (`{"detail": "No branch is currently assigned to this manager."}`).
+  * `HTTP 404 Not Found`: If the authenticated manager is not currently assigned to any branch (`{"detail": "No branch is currently assigned to this manager."}`).
 
-#### 8.3.2 Retrieve Branch Service Detail
-* **URL:** `GET /api/manager/branch/services/{id}/` (or `GET /api/manager/services/{id}/`)
+#### 8.4.2 Retrieve Branch Service Detail
+* **URL:** `GET /api/manager/branch/services/{id}/` (or alias `GET /api/manager/services/{id}/`)
 * **Access:** **Manager only** (`IsManagerRole`)
 * **Security & Isolation:** Accessing a service offered by a different branch returns `HTTP 404 Not Found`.
 
 ---
 
-### 8.4 Customer Service Browsing
+### 8.5 Customer Service Categories & Browsing
 
-Allows customers to browse active services in the catalogue or see available services for a specific active branch.
+Allows customers to browse active service categories or view active services globally or for a specific branch.
 
-#### 8.4.1 List Active Catalogue Services
+#### 8.5.1 List Service Categories
+* **URL:** `GET /api/customer/service-categories/`
+* **Access:** **Customer only** (`IsCustomerRole`)
+* **Headers:** `Authorization: Bearer <customer_access_token>`
+* **Description:** Returns all active categories ordered by `display_order` ascending, then `name` ascending. Excludes inactive categories. Each category object includes an active `services_count` and the array of active `services`.
+* **Success Response (`HTTP 200 OK`):**
+  ```json
+  [
+    {
+      "id": 1,
+      "name": "Mechanical",
+      "description": "Engine, transmission, and chassis maintenance",
+      "display_order": 1,
+      "services_count": 2,
+      "services": [
+        {
+          "id": 1,
+          "name": "Oil & Filter Change",
+          "description": "Full synthetic oil and OEM filter replacement",
+          "category_id": 1,
+          "category_name": "Mechanical"
+        },
+        {
+          "id": 2,
+          "name": "Brake Pad Inspection",
+          "description": "Front and rear brake disc and pad inspection",
+          "category_id": 1,
+          "category_name": "Mechanical"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Body Services",
+      "description": "Dent repair and spray painting",
+      "display_order": 2,
+      "services_count": 1,
+      "services": [
+        {
+          "id": 3,
+          "name": "Full Body Polish & Wax",
+          "description": "Exterior compound polishing and Carnauba protective wax",
+          "category_id": 2,
+          "category_name": "Body Services"
+        }
+      ]
+    }
+  ]
+  ```
+
+#### 8.5.2 Browse Active Services
 * **URL:** `GET /api/customer/services/` (or `GET /api/customer/services`)
 * **Access:** **Customer only** (`IsCustomerRole`)
 * **Headers:** `Authorization: Bearer <customer_access_token>`
 * **Query Parameters:**
-  * `search` *(optional)*: Search by keyword.
+  * `search` *(optional)*: Search keyword matching service name or description.
+  * `category` / `category_id` *(optional)*: Filter by category ID. Pass `none` or `0` for uncategorized.
+* **Category Visibility Rule:** Automatically excludes services that belong to an inactive category.
 * **Success Response (`HTTP 200 OK`):**
   ```json
   [
     {
       "id": 1,
       "name": "Oil & Filter Change",
-      "description": "Full synthetic oil and OEM filter replacement"
+      "description": "Full synthetic oil and OEM filter replacement",
+      "category_id": 1,
+      "category_name": "Mechanical"
+    },
+    {
+      "id": 2,
+      "name": "Brake Pad Inspection",
+      "description": "Front and rear brake disc and pad inspection",
+      "category_id": 1,
+      "category_name": "Mechanical"
     }
   ]
   ```
 
-#### 8.4.2 List Services Available at a Specific Branch
+#### 8.5.3 List Services Available at a Specific Branch
 * **URL:** `GET /api/customer/branches/{branch_id}/services/`
 * **Access:** **Customer only** (`IsCustomerRole`)
 * **Headers:** `Authorization: Bearer <customer_access_token>`
+* **Query Parameters:**
+  * `search` *(optional)*: Search keyword matching service name or description.
+  * `category` / `category_id` *(optional)*: Filter by category ID. Pass `none` or `0` for uncategorized.
+* **Visibility Rule:** Only returns services that have `is_available = true`, `service.is_active = true`, and whose category is active (or uncategorized).
 * **Success Response (`HTTP 200 OK`):**
   ```json
   [
     {
-      "id": 5,
+      "id": 10,
       "service_id": 1,
       "name": "Oil & Filter Change",
       "description": "Full synthetic oil and OEM filter replacement",
+      "category_id": 1,
+      "category_name": "Mechanical",
       "is_available": true
     }
   ]
   ```
 * **Errors:**
-  * `404 Not Found`: If the branch is inactive or does not exist.
+  * `HTTP 404 Not Found`: If the branch is inactive or does not exist.
 
 ---
 
@@ -2857,46 +3521,111 @@ Generic routes available to any authenticated user:
 
 ---
 
-## 13. Database Migrations & Test Verification
+## 13. Banner Management Module API Reference
 
-### 13.1 Database Migration Status
+### 13.1 Overview & Multi-App Distribution
+The Banner Management module enables the Administrator to manage promotional and operational banners displayed in the Customer and Manager Mobile Apps.
+
+#### Target App Matrix:
+* `CUSTOMER`: Visible only to authenticated customers via `/api/customer/banners/`.
+* `MANAGER`: Visible only to authenticated branch managers via `/api/manager/banners/`.
+* `BOTH`: Broadcast to both customer and manager feeds.
+
+#### Ordering & Soft Deactivation:
+* Banners sort by `display_order ASC`, then by `created_at DESC` (lower numbers appear first).
+* Inactive banners (`is_active = false`) are automatically hidden from mobile feeds.
+* `DELETE /api/admin/banners/{id}/` performs safe soft deactivation by setting `is_active = false`. Records and image files are retained.
+* Banners can be reactivated anytime via `PATCH /api/admin/banners/{id}/` with `{"is_active": true}`.
+
+---
+
+### 13.2 Admin Banner Management (`/api/admin/banners/`)
+* **Access:** `IsAuthenticated` + `IsAdminRole`
+
+#### Endpoints:
+* `GET /api/admin/banners/`: List all banners. Query filters: `search`, `target_app`, `is_active`.
+* `POST /api/admin/banners/`: Create banner (`multipart/form-data`). Fields: `title` (required), `image` (required file, max 2 MB), `target_app` (`CUSTOMER`|`MANAGER`|`BOTH`, default `BOTH`), `display_order` (default 0), `is_active` (default true).
+* `GET /api/admin/banners/{id}/`: Retrieve single banner detail.
+* `PATCH /api/admin/banners/{id}/`: Partial update metadata (JSON) or replace image file (`multipart/form-data`). Automatically deletes old image from storage upon successful replacement.
+* `DELETE /api/admin/banners/{id}/`: Soft-deactivate banner (`is_active=False`).
+
+---
+
+### 13.3 Customer Promotional Banners (`/api/customer/banners/`)
+* **URL:** `GET /api/customer/banners/` (and `/api/customer/banners`)
+* **Access:** `IsAuthenticated` + `IsCustomerRole`
+* **Filter:** `is_active=True` AND `target_app__in=['CUSTOMER', 'BOTH']`
+* **Ordering:** `display_order ASC`, `-created_at DESC`
+* **Success Response (`HTTP 200 OK`):**
+  ```json
+  [
+    {
+      "id": 1,
+      "title": "Summer AC Inspection Special",
+      "image": "http://192.168.1.2:8001/media/banners/7c2a1e8418454291a1d2088a29a00b12.jpg",
+      "target_app": "CUSTOMER",
+      "display_order": 1
+    }
+  ]
+  ```
+
+---
+
+### 13.4 Manager Announcements & Banners (`/api/manager/banners/`)
+* **URL:** `GET /api/manager/banners/` (and `/api/manager/banners`)
+* **Access:** `IsAuthenticated` + `IsManagerRole`
+* **Filter:** `is_active=True` AND `target_app__in=['MANAGER', 'BOTH']`
+* **Ordering:** `display_order ASC`, `-created_at DESC`
+* **Success Response (`HTTP 200 OK`):**
+  ```json
+  [
+    {
+      "id": 3,
+      "title": "Manager Safety Protocol 2026",
+      "image": "http://192.168.1.2:8001/media/banners/3a1c9e886124411085f2192a01d00e99.png",
+      "target_app": "MANAGER",
+      "display_order": 1
+    }
+  ]
+  ```
+
+---
+
+## 14. Database Migrations & Test Verification
+
+### 14.1 Database Migration Status
 
 * **`branches.0001_initial`**: Applied (`[X]`).
 * **`branches.0002_managerprofile`**: Applied (`[X]`).
 * **`customers.0001_initial`**: Applied (`[X]`).
 * **`customers.0002_vehicle_is_active`**: Applied (`[X]`).
+* **`customers.0003_customerprofile_profile_picture`**: Applied (`[X]`).
+* **`banners.0001_initial`**: Applied (`[X]`).
 * **`services.0001_initial`**: Applied (`[X]`).
 * **`visits.0001_initial`**: Applied (`[X]`).
 * **`reviews.0001_initial`**: Generated (`[ ]` unapplied on development database).
-  > To apply: `python manage.py migrate reviews`
-* **`reports` app**: No database models created; all metrics are dynamic calculations. No migration required.
 * **`notifications.0001_initial`**: Generated (`[ ]` unapplied on development database).
-  > **Note on Migrations:** In accordance with system policy, database migrations are **never automatically executed** on the development database.
-  > To apply the `notifications_devicetoken` and `notifications_notificationlog` tables, execute:
-  > ```bash
-  > python manage.py migrate notifications
-  > ```
 
-### 13.2 Verified Test Suite Execution
+### 14.2 Verified Test Suite Execution
 
 All test suites were executed directly against the test runner with zero failures:
 
 | Test Scope | Command | Tests Run | Result | Notes |
 |---|---|---|---|---|
+| **Banners App** | `python manage.py test app.banners` | **17** | **OK (Passed)** | Banner upload, listing, filtering, search, JSON update, image replacement, old file cleanup, soft deactivation, reactivation, customer filtering, manager filtering, display ordering, format/size validation, and RBAC isolation. |
 | **Notifications App** | `python manage.py test app.notifications` | **25** | **OK (Passed)** | Token registration, multi-device support, re-registration/deduplication, cross-user transfer, platform validation, deactivation via PATCH and string, deletion, cross-user isolation, in-app notification inbox, mark-as-read, admin oversight, provider simulation, and visit status update safe failure isolation. |
 | **Reports App** | `python manage.py test app.reports` | **17** | **OK (Passed)** | Admin dashboard summary, configurable status stages grouping, safe zero-state handling, branch filtering, date range filtering, invalid date handling, visits report, reviews report, reports overview, and RBAC rejection of Manager & Customer roles. |
 | **Reviews App** | `python manage.py test app.reviews` | **28** | **OK (Passed)** | 1-5 rating validation, optional feedback, completed terminal stage eligibility, cross-customer isolation, duplicate review rejection, manager branch isolation & read-only access, admin listing/filters/search, admin moderation PATCH, admin DELETE, and RBAC security. |
 | **Visits App** | `python manage.py test app.visits` | **24** | **OK (Passed)** | Stage CRUD, duplicate prevention, visit creation, vehicle mismatch rejection, branch service check, unassigned manager check, cross-branch isolation, status updates, audit logs, and customer isolation. |
 | **Services App** | `python manage.py test app.services` | **34** | **OK (Passed)** | Admin catalogue CRUD, duplicate prevention, branch assignments, manager scoping & isolation, customer browsing, and RBAC permissions. |
-| **Customers App** | `python manage.py test app.customers` | **47** | **OK (Passed)** | Walk-in customer registration, vehicle registration, duplicate plate prevention, customer self-service isolation, customer/manager safe soft deletion (`is_active=False`), 401/403/404 handling, active list filtering, and service history preservation. |
+| **Customers App** | `python manage.py test app.customers` | **62** | **OK (Passed)** | Walk-in customer registration, vehicle registration, duplicate plate prevention, customer self-service isolation, customer profile editing, JPEG/PNG/WEBP upload, 2MB limit, old picture deletion, customer/manager safe soft deletion, and 401/403/404 handling. |
 | **Managers App** | `python manage.py test app.managers` | **8** | **OK (Passed)** | Assigned manager, unassigned manager, trailing slash variants, RBAC permissions, and isolation tests. |
 | **Branches App** | `python manage.py test app.branches` | **41** | **OK (Passed)** | Branch CRUD, business hours, and manager assignment tests. |
-| **Accounts App** | `python manage.py test app.accounts` | **28** | **OK (Passed)** | Login, signup, token refresh, and manager CRUD tests. |
-| **Full Suite** | `python manage.py test` | **257** | **OK (Passed)** | Complete project regression suite (257 tests passed in ~403.9s). |
+| **Accounts App** | `python manage.py test app.accounts` | **33** | **OK (Passed)** | Login, signup, token refresh, CustomerMe profile picture, and manager CRUD tests. |
 
 ---
 
-## 14. Frontend Integration Guide (Axios Example)
+## 15. Frontend Integration Guide (Axios Example)
 
 Here is a ready-to-use Axios configuration for your frontend application:
 

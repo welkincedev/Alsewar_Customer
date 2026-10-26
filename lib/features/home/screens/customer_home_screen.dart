@@ -83,65 +83,76 @@ class _CustomerMainShellState extends ConsumerState<CustomerMainShell> {
     final horizontalPadding = screenWidth < 360 ? 12.0 : 20.0;
     final activeIndex = _currentIndex.clamp(0, pages.length - 1);
 
-    return Scaffold(
-      backgroundColor: AppColors.warmPorcelain,
-      extendBody: true,
-      floatingActionButton: widget.floatingActionButton,
-      floatingActionButtonLocation:
-          widget.floatingActionButtonLocation ??
-          const FloatingAbovePillNavBarLocation(),
-      body: IndexedStack(index: activeIndex, children: pages),
-      bottomNavigationBar: isKeyboardVisible
-          ? const SizedBox.shrink()
-          : Listener(
-              behavior: HitTestBehavior.deferToChild,
-              child: SafeArea(
-                top: false,
-                bottom: true,
-                minimum: const EdgeInsets.only(bottom: 12.0),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  child: SizedBox(
-                    height: 62.0,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Stock BottomNavigationBar maintains complete compatibility
-                        // for existing test suites and accessibility finders
-                        IgnorePointer(
-                          child: Opacity(
-                            opacity: 0.0,
-                            child: BottomNavigationBar(
-                              currentIndex: activeIndex,
-                              onTap: _onTabSelected,
-                              type: BottomNavigationBarType.fixed,
-                              backgroundColor: Colors.transparent,
-                              elevation: 0,
-                              showUnselectedLabels: false,
-                              showSelectedLabels: false,
-                              items: List.generate(
-                                navItems.length,
-                                (i) => const BottomNavigationBarItem(
-                                  icon: SizedBox.shrink(),
-                                  label: '',
+    return Theme(
+      data: Theme.of(context).copyWith(splashFactory: InkRipple.splashFactory),
+      child: Scaffold(
+        backgroundColor: AppColors.warmPorcelain,
+        extendBody: true,
+        floatingActionButton: widget.floatingActionButton,
+        floatingActionButtonLocation:
+            widget.floatingActionButtonLocation ??
+            const FloatingAbovePillNavBarLocation(),
+        body: IndexedStack(
+          index: activeIndex,
+          children: [
+            for (int i = 0; i < pages.length; i++)
+              TickerMode(enabled: activeIndex == i, child: pages[i]),
+          ],
+        ),
+        bottomNavigationBar: isKeyboardVisible
+            ? const SizedBox.shrink()
+            : Listener(
+                behavior: HitTestBehavior.deferToChild,
+                child: SafeArea(
+                  top: false,
+                  bottom: true,
+                  minimum: const EdgeInsets.only(bottom: 12.0),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                    ),
+                    child: SizedBox(
+                      height: 62.0,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Stock BottomNavigationBar maintains complete compatibility
+                          // for existing test suites and accessibility finders
+                          IgnorePointer(
+                            child: Opacity(
+                              opacity: 0.0,
+                              child: BottomNavigationBar(
+                                currentIndex: activeIndex,
+                                onTap: _onTabSelected,
+                                type: BottomNavigationBarType.fixed,
+                                backgroundColor: Colors.transparent,
+                                elevation: 0,
+                                showUnselectedLabels: false,
+                                showSelectedLabels: false,
+                                items: List.generate(
+                                  navItems.length,
+                                  (i) => const BottomNavigationBarItem(
+                                    icon: SizedBox.shrink(),
+                                    label: '',
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
 
-                        // Desert Luxe Floating Pill Navigation Bar
-                        FloatingPillNavBar(
-                          currentIndex: activeIndex,
-                          onTap: _onTabSelected,
-                          items: navItems,
-                        ),
-                      ],
+                          // Desert Luxe Floating Pill Navigation Bar
+                          FloatingPillNavBar(
+                            currentIndex: activeIndex,
+                            onTap: _onTabSelected,
+                            items: navItems,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }

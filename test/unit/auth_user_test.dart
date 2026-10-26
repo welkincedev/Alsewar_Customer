@@ -60,5 +60,33 @@ void main() {
 
       expect(user.isActive, false);
     });
+
+    test(
+      'fromJson correctly parses backend membership fields when present',
+      () {
+        final json = {
+          'id': 7,
+          'username': 'gold_member',
+          'email': 'gold@example.com',
+          'role': 'CUSTOMER',
+          'first_name': 'Salem',
+          'last_name': 'Al-Dosari',
+          'loyalty_points': 34500,
+          'membership_tier': 'GOLD',
+          'membership_id': 'AS-99214',
+        };
+
+        final user = AuthUser.fromJson(json);
+
+        expect(user.loyaltyPoints, 34500);
+        expect(user.membershipTier, 'GOLD');
+        expect(user.membershipId, 'AS-99214');
+
+        final serialized = user.toJson();
+        expect(serialized['loyalty_points'], 34500);
+        expect(serialized['membership_tier'], 'GOLD');
+        expect(serialized['membership_id'], 'AS-99214');
+      },
+    );
   });
 }
