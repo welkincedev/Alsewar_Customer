@@ -21,8 +21,8 @@ class PreviewMockData {
     firstName: 'Ahmed',
     lastName: 'Al-Mansoor #',
     isActive: true,
-    loyaltyPoints: 23021,
-    membershipTier: 'Silver',
+    loyaltyPoints: 30000,
+    membershipTier: 'GOLD',
     membershipId: 'AS-88301',
   );
 

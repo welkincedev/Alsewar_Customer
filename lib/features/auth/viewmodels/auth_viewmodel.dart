@@ -162,6 +162,105 @@ class AuthViewModel extends AsyncNotifier<AuthState> {
     }
   }
 
+  /// Update customer profile execution
+  Future<AuthUser> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? phone,
+    String? email,
+    List<int>? profilePictureBytes,
+    String? profilePictureFilename,
+    String? profilePicturePath,
+    void Function(int sent, int total)? onSendProgress,
+  }) async {
+    final currentUser = state.value?.user;
+    final accessToken = await _tokenStorage.getAccessToken();
+
+    if (accessToken != null && accessToken.isNotEmpty) {
+      final updatedUser = await _authService.updateProfile(
+        accessToken: accessToken,
+        firstName: firstName,
+        lastName: lastName,
+        phone: phone,
+        email: email,
+        profilePictureBytes: profilePictureBytes,
+        profilePictureFilename: profilePictureFilename,
+        profilePicturePath: profilePicturePath,
+        onSendProgress: onSendProgress,
+      );
+
+      // Merge updated profile data while preserving non-profile fields
+      final mergedUser = updatedUser.copyWith(
+        loyaltyPoints: updatedUser.loyaltyPoints ?? currentUser?.loyaltyPoints,
+        membershipTier:
+            updatedUser.membershipTier ?? currentUser?.membershipTier,
+        membershipId: updatedUser.membershipId ?? currentUser?.membershipId,
+        phone: updatedUser.phone ?? phone ?? currentUser?.phone,
+        profilePicture:
+            updatedUser.profilePicture ?? currentUser?.profilePicture,
+      );
+
+      state = AsyncValue.data(
+        AuthState(status: AuthStatus.authenticated, user: mergedUser),
+      );
+      return mergedUser;
+    } else if (currentUser != null) {
+      // Offline/Preview mode fallback when no backend session exists
+      final localUpdated = currentUser.copyWith(
+        firstName: firstName ?? currentUser.firstName,
+        lastName: lastName ?? currentUser.lastName,
+        phone: phone ?? currentUser.phone,
+        email: email ?? currentUser.email,
+        profilePicture:
+            (profilePicturePath != null && profilePicturePath.isNotEmpty)
+            ? profilePicturePath
+            : currentUser.profilePicture,
+      );
+      state = AsyncValue.data(
+        AuthState(status: AuthStatus.authenticated, user: localUpdated),
+      );
+      return localUpdated;
+    }
+
+    throw Exception('Authentication required. Please log in.');
+  }
+
+  /// Fetch the latest customer profile from backend using profile/me API and update auth state
+  Future<AuthUser> refreshProfile() async {
+    final currentUser = state.value?.user;
+    final accessToken = await _tokenStorage.getAccessToken();
+
+    if (accessToken != null && accessToken.isNotEmpty) {
+      final fetchedUser = await _authService.getCurrentCustomer(accessToken);
+
+      // Merge and preserve non-profile fields (loyalty points, tier, membership ID, phone, etc.)
+      final mergedUser = fetchedUser.copyWith(
+        loyaltyPoints: fetchedUser.loyaltyPoints ?? currentUser?.loyaltyPoints,
+        membershipTier:
+            fetchedUser.membershipTier ?? currentUser?.membershipTier,
+        membershipId: fetchedUser.membershipId ?? currentUser?.membershipId,
+        phone:
+            (fetchedUser.phone != null && fetchedUser.phone!.trim().isNotEmpty)
+            ? fetchedUser.phone
+            : currentUser?.phone,
+        profilePicture:
+            (fetchedUser.profilePicture != null &&
+                fetchedUser.profilePicture!.trim().isNotEmpty)
+            ? fetchedUser.profilePicture
+            : currentUser?.profilePicture,
+      );
+
+      state = AsyncValue.data(
+        AuthState(status: AuthStatus.authenticated, user: mergedUser),
+      );
+      return mergedUser;
+    } else if (currentUser != null) {
+      return currentUser;
+    }
+
+    throw Exception('Authentication required. Please log in.');
+  }
+
   /// Customer logout execution
   Future<void> logout() async {
     if (_isLoggingOut) return;

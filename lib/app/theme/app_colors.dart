@@ -11,10 +11,14 @@ import 'package:flutter/material.dart';
 abstract class AppColors {
   // ─── Primary Brand Colors ──────────────────────────────────────────
   static const Color pureWhite = Color(0xFFFFFFFF);
+  static const Color offWhite = Color(0xFFF8F9FB);
   static const Color deepBlack = Color(0xFF171717);
+  static const Color charcoal = Color(0xFF171717);
+  static const Color deepNavy = Color(0xFF021C4B);
+  static const Color navy = deepNavy;
 
   static const Color signatureGold = Color(0xFFD9B152);
-  static const Color champagneGold = Color(0xFFC6A66B);
+  static const Color champagneGold = Color(0xFFC5A059);
   static const Color richMetallicGold = Color(0xFFB38B45);
 
   static const Color softWhite = Color(0xFFF8F8F8);

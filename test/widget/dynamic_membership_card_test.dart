@@ -14,7 +14,7 @@ void main() {
 
   group('Dynamic Membership Card UI & Theme Tests', () {
     testWidgets(
-      'Renders Silver Card at 0 points with branding, name, points, and affordance',
+      'Renders Silver Card at 0 points with greeting, tier chip, and coin balance',
       (tester) async {
         final membership = CustomerMembership.fromUser(
           memberName: 'Sarah Al-Mansoor',
@@ -26,46 +26,34 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Branding
-        expect(find.text('AL SEWAR'), findsOneWidget);
-        // Tier Badge
-        expect(find.text('SILVER MEMBER'), findsOneWidget);
-        // Points
-        expect(find.text('0'), findsOneWidget);
-        expect(find.text('Points'), findsOneWidget);
-        // Customer name without greeting
-        expect(find.text('Sarah Al-Mansoor'), findsOneWidget);
-        expect(find.textContaining('Welcome'), findsNothing);
-        // Tap Affordance
-        expect(find.text('Card Details'), findsOneWidget);
-        // Progress Bar present for Silver
-        expect(find.byType(LinearProgressIndicator), findsOneWidget);
+        expect(find.text('Hi, Sarah Al-Mansoor'), findsOneWidget);
+        expect(find.text('SILVER'), findsOneWidget);
+        expect(find.text('0 Coins'), findsOneWidget);
       },
     );
 
-    testWidgets('Renders Gold Card at 25,001 points with Membership ID', (
-      tester,
-    ) async {
-      final membership = CustomerMembership.fromUser(
-        memberName: 'Khalid Al-Ghamdi',
-        membershipId: 'AS-77401',
-        points: 25001,
-      );
+    testWidgets(
+      'Renders Gold Card at 25,001 points with greeting, tier chip, and coin balance',
+      (tester) async {
+        final membership = CustomerMembership.fromUser(
+          memberName: 'Khalid Al-Ghamdi',
+          membershipId: 'AS-77401',
+          points: 25001,
+        );
 
-      await tester.pumpWidget(wrapWidget(LoyaltyCard(membership: membership)));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          wrapWidget(LoyaltyCard(membership: membership)),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('AL SEWAR'), findsOneWidget);
-      expect(find.text('GOLD MEMBER'), findsOneWidget);
-      expect(find.text('25,001'), findsOneWidget);
-      expect(find.text('Khalid Al-Ghamdi'), findsOneWidget);
-      expect(find.text('ID: AS-77401'), findsOneWidget);
-      expect(find.text('Card Details'), findsOneWidget);
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
-    });
+        expect(find.text('Hi, Khalid Al-Ghamdi'), findsOneWidget);
+        expect(find.text('GOLD'), findsOneWidget);
+        expect(find.text('25,001 Coins'), findsOneWidget);
+      },
+    );
 
     testWidgets(
-      'Renders Platinum Card at 50,001 points without progress bar towards nonexistent tier',
+      'Renders Platinum Card at 50,001 points with greeting, tier chip, and coin balance',
       (tester) async {
         final membership = CustomerMembership.fromUser(
           memberName: 'Dr. Sultan Al-Otaibi',
@@ -77,13 +65,9 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('AL SEWAR'), findsOneWidget);
-        expect(find.text('PLATINUM MEMBER'), findsOneWidget);
-        expect(find.text('50,001'), findsOneWidget);
-        expect(find.text('Dr. Sultan Al-Otaibi'), findsOneWidget);
-        expect(find.text('Platinum Privileges Unlocked'), findsOneWidget);
-        // No progress bar on card for Platinum
-        expect(find.byType(LinearProgressIndicator), findsNothing);
+        expect(find.text('Hi, Dr. Sultan Al-Otaibi'), findsOneWidget);
+        expect(find.text('PLATINUM'), findsOneWidget);
+        expect(find.text('50,001 Coins'), findsOneWidget);
       },
     );
 
@@ -114,9 +98,9 @@ void main() {
         // Bottom sheet is visible
         expect(find.byType(MembershipDetailsBottomSheet), findsOneWidget);
         expect(find.text('Membership Details'), findsOneWidget);
-        expect(find.text('AVAILABLE BALANCE'), findsOneWidget); // Card
+        expect(find.text('25,000 Coins'), findsOneWidget); // Card
         expect(find.text('AVAILABLE POINTS'), findsOneWidget); // Sheet
-        expect(find.text('25,000'), findsNWidgets(2)); // Card + sheet
+        expect(find.text('25,000'), findsOneWidget); // Sheet points
         expect(find.text('Next Tier: Gold'), findsOneWidget);
         expect(find.text('Required Points'), findsOneWidget);
         expect(find.text('25,001'), findsOneWidget);
@@ -197,6 +181,68 @@ void main() {
         expect(
           find.textContaining('Every AED 100 spent earns 1 point'),
           findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
+      'Renders exact new background images for Silver, Gold, and Platinum',
+      (tester) async {
+        // 1. Silver tier uses assets/images/slbg.png
+        await tester.pumpWidget(
+          wrapWidget(
+            LoyaltyCard(
+              membership: CustomerMembership.fromUser(
+                memberName: 'Silver User',
+                points: 1000,
+                backendTier: 'Silver',
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        var imageWidget = tester.widget<Image>(find.byType(Image));
+        expect(
+          (imageWidget.image as AssetImage).assetName,
+          'assets/images/slbg.png',
+        );
+
+        // 2. Gold tier uses assets/images/gdbg.png
+        await tester.pumpWidget(
+          wrapWidget(
+            LoyaltyCard(
+              membership: CustomerMembership.fromUser(
+                memberName: 'Gold User',
+                points: 30000,
+                backendTier: 'Gold',
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        imageWidget = tester.widget<Image>(find.byType(Image));
+        expect(
+          (imageWidget.image as AssetImage).assetName,
+          'assets/images/gdbg.png',
+        );
+
+        // 3. Platinum tier uses assets/images/plbg.png
+        await tester.pumpWidget(
+          wrapWidget(
+            LoyaltyCard(
+              membership: CustomerMembership.fromUser(
+                memberName: 'Platinum User',
+                points: 75000,
+                backendTier: 'Platinum',
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        imageWidget = tester.widget<Image>(find.byType(Image));
+        expect(
+          (imageWidget.image as AssetImage).assetName,
+          'assets/images/plbg.png',
         );
       },
     );

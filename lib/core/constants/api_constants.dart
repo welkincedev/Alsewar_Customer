@@ -6,13 +6,15 @@ class ApiConstants {
   // iOS Simulator/Localhost : 'http://127.0.0.1:8001'
   // LAN / Physical Device   : 'http://192.168.1.3:8001'
   // Production              : 'https://api.alsewarcarwash.com'
-  static const String baseUrl = 'http://192.168.1.6:8001';
+  static const String baseUrl = 'http://192.168.1.8:8001';
 
-  // ─── AUTHENTICATION ENDPOINTS (port 8001) ───────────────────
+  // ─── AUTHENTICATION & PROFILE ENDPOINTS (port 8001) ────────
   static const String customerSignup = '/api/customer/signup/';
   static const String customerLogin = '/api/customer/login/';
   static const String tokenRefresh = '/api/auth/token/refresh/';
   static const String customerMe = '/api/customer/me/';
+  static const String customerProfile = '/api/customer/profile/';
+  static const String customerProfilePicture = '/api/customer/profile/picture/';
   static const String logout = '/api/auth/logout/';
 
   // ─── BRANCH ENDPOINTS (port 8001) ───────────────────────────

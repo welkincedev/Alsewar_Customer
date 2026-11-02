@@ -30,7 +30,7 @@ class FallbackBannerItem {
 
 /// Al Sewar Promotional Banner Section.
 ///
-/// Features a horizontal swipeable carousel preserving the 1080:400 (2.7:1) aspect ratio.
+/// Features a horizontal swipeable carousel with a 2:1 aspect ratio.
 ///
 /// Data Logic:
 /// - If backend returns active banners, display only backend banners.
@@ -38,7 +38,7 @@ class FallbackBannerItem {
 ///     1. Premium Auto Care -> ServicesScreen
 ///     2. Complete Auto Care -> AboutUsScreen
 ///     3. Loyalty Rewards -> ProfileScreen (rewards)
-/// - If banners are loading, show a compact 2.7:1 loading skeleton.
+/// - If banners are loading, show a compact 2:1 loading skeleton.
 /// - If an API error occurs, handle error separately without misleading fallback claims.
 class PromotionalBanner extends StatefulWidget {
   final List<dynamic>? banners;
@@ -157,7 +157,7 @@ class _PromotionalBannerState extends State<PromotionalBanner> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ── 2.7:1 Aspect Ratio Banner Card (1080 × 400 px) ──────────
+          // ── 2:1 Aspect Ratio Banner Card ────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: SizedBox(
@@ -165,7 +165,7 @@ class _PromotionalBannerState extends State<PromotionalBanner> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: AspectRatio(
-                  aspectRatio: 2.7,
+                  aspectRatio: 2.0,
                   child: PageView.builder(
                     controller: _pageController,
                     itemCount: bannerCount,
@@ -201,7 +201,7 @@ class _PromotionalBannerState extends State<PromotionalBanner> {
     );
   }
 
-  /// Compact 2.7:1 Loading Skeleton.
+  /// Compact 2:1 Loading Skeleton.
   Widget _buildLoadingState() {
     return SizedBox(
       width: double.infinity,
@@ -212,7 +212,7 @@ class _PromotionalBannerState extends State<PromotionalBanner> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: AspectRatio(
-              aspectRatio: 2.7,
+              aspectRatio: 2.0,
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.deepCharcoal.withValues(alpha: 0.85),

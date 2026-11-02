@@ -18,26 +18,26 @@ void main() {
   final sampleBranches = [
     const Branch(
       id: 1,
-      name: 'Al Sewar Riyadh Olaya',
-      code: 'RUH-01',
-      address: 'King Fahd Rd, Olaya',
-      city: 'Riyadh',
-      phone: '+966 11 000 0001',
-      email: 'olaya@alsewar.com',
-      latitude: 24.7136,
-      longitude: 46.6753,
+      name: 'Al Sewar Kalba HQ',
+      code: 'KLB-01',
+      address: 'Near Stadium, Al Taraif 5',
+      city: 'Kalba',
+      phone: '+971 9 277 7291',
+      email: 'kalba@alsewarauto.com',
+      latitude: 25.0333,
+      longitude: 56.3500,
       isActive: true,
     ),
     const Branch(
       id: 2,
-      name: 'Al Sewar Jeddah Corniche',
-      code: 'JED-01',
-      address: 'Corniche Rd, Al Shati',
-      city: 'Jeddah',
-      phone: '+966 12 000 0002',
-      email: 'corniche@alsewar.com',
-      latitude: 21.5433,
-      longitude: 39.1728,
+      name: 'Al Sewar Fujairah Musalla',
+      code: 'FUJ-01',
+      address: 'Sohail Bldg, Eid Musalla Rd',
+      city: 'Fujairah',
+      phone: '+971 9 222 0000',
+      email: 'fujairah@alsewarauto.com',
+      latitude: 25.1288,
+      longitude: 56.3265,
       isActive: true,
     ),
   ];
@@ -50,14 +50,13 @@ void main() {
   }) {
     return ProviderScope(
       overrides: [
-        customerServicesProvider
-            .overrideWith((ref) => Future.value(<ServiceItem>[])),
-        branchDetailProvider(1).overrideWith(
-          (ref) => Future.value(sampleBranches.first),
+        customerServicesProvider.overrideWith(
+          (ref) => Future.value(<ServiceItem>[]),
         ),
-        branchHoursProvider(1).overrideWith(
-          (ref) => Future.value(<BusinessHour>[]),
-        ),
+        branchDetailProvider(1)
+            .overrideWith((ref) => Future.value(sampleBranches.first)),
+        branchHoursProvider(1)
+            .overrideWith((ref) => Future.value(<BusinessHour>[])),
         branchListViewModelProvider.overrideWith(() {
           final notifier = _MockBranchViewModel(
             branches: branches ?? sampleBranches,
@@ -67,113 +66,149 @@ void main() {
           return notifier;
         }),
       ],
-      child: MaterialApp(
-        home: AboutUsScreen(
-          floatingActionButton: fab,
-        ),
-      ),
+      child: MaterialApp(home: AboutUsScreen(floatingActionButton: fab)),
     );
   }
 
   group('AboutUs Content & Architecture Tests', () {
     test(
-        'aboutUsContentProvider provides complete verified Al Sewar profile data',
-        () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+      'aboutUsContentProvider provides complete verified Al Sewar profile data',
+      () {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
 
-      final content = container.read(aboutUsContentProvider);
+        final content = container.read(aboutUsContentProvider);
 
-      // Hero
-      expect(content.hero.title, equals('AL SEWAR AUTO CENTER'));
-      expect(content.hero.subtitle, equals('Excellence in Automotive Care'));
-      expect(content.hero.tag, isNotEmpty);
-      expect(content.hero.imageAsset, contains('banner_auto_care.png'));
+        // Hero
+        expect(content.hero.title, equals('AL SEWAR AUTO CENTER'));
+        expect(
+          content.hero.subtitle,
+          equals('Complete Vehicle Care Across UAE'),
+        );
+        expect(content.hero.tag, equals('ABOUT AL SEWAR'));
+        expect(content.hero.imageAsset, contains('banner_auto_care.png'));
 
-      // Overview
-      expect(content.overview.headline, isNotEmpty);
-      expect(content.overview.pillars.length, equals(3));
+        // Who We Are & Key Facts
+        expect(
+          content.whoWeAre.headline,
+          equals('Best Car Repair Service in Northern Emirates'),
+        );
+        expect(content.whoWeAre.shortSummary, contains('11 years'));
+        expect(content.whoWeAre.keyFacts.length, equals(4));
+        expect(content.whoWeAre.keyFacts[0].value, equals('11+ Years'));
+        expect(content.whoWeAre.keyFacts[1].value, equals('20+ Years'));
+        expect(content.whoWeAre.keyFacts[2].value, equals('10 Locations'));
+        expect(content.whoWeAre.keyFacts[3].value, equals('One-Stop'));
 
-      // Key Metrics
-      expect(content.stats.length, equals(4));
-      expect(content.stats[0].value, equals('10+'));
-      expect(content.stats[1].value, equals('3'));
-      expect(content.stats[2].value, equals('25k+'));
-      expect(content.stats[3].value, equals('99%'));
+        // Mission & Vision
+        expect(content.missionVision.missionTitle, equals('Our Mission'));
+        expect(
+          content.missionVision.missionMotto,
+          equals('Deliver Quality. Earn Trust. Keep You Moving.'),
+        );
+        expect(content.missionVision.visionTitle, equals('Our Vision'));
+        expect(
+          content.missionVision.visionMotto,
+          equals('Driven by Excellence. Focused on the Future.'),
+        );
 
-      // Mission & Vision
-      expect(content.missionVision.missionTitle, equals('Our Mission'));
-      expect(content.missionVision.visionTitle, equals('Our Vision'));
+        // Service Divisions (Actual 4 from Company Profile)
+        expect(content.services.length, equals(4));
+        expect(content.services[0].title, equals('Tyre Services'));
+        expect(content.services[1].title, equals('Mechanical'));
+        expect(content.services[2].title, equals('Body Services'));
+        expect(content.services[3].title, equals('Detailing'));
 
-      // Service Divisions
-      expect(content.services.length, equals(4));
-      expect(content.services[0].title, equals('Express Wash & Detailing'));
-      expect(content.services[1].title, equals('Interior Preservation'));
-      expect(content.services[2].title, equals('Ceramic & Paint Protection'));
-      expect(content.services[3].title, equals('Diagnostics & Maintenance'));
-
-      // Contact & Support
-      expect(content.contact.phoneTitle, equals('Customer Helpline'));
-      expect(content.contact.phoneNumber, isNotEmpty);
-      expect(content.contact.emailTitle, equals('Support Email'));
-      expect(content.contact.emailAddress, contains('@'));
-      expect(content.contact.whatsappTitle, equals('WhatsApp Concierge'));
-    });
+        // Contact & Support (Verified from Company Profile)
+        expect(content.contact.primaryPhone, equals('+971 9 277 7291'));
+        expect(content.contact.secondaryPhone, equals('+971 56 167 1673'));
+        expect(content.contact.email, equals('info@alsewarauto.com'));
+        expect(
+          content.contact.websiteUrl,
+          equals('https://www.alsewarauto.com'),
+        );
+        expect(content.contact.headquarters, equals('Kalba, Sharjah, UAE'));
+      },
+    );
   });
 
   group('AboutUsScreen UI Rendering & Navigation Tests', () {
-    testWidgets('renders all 7 required Desert Luxe sections cleanly',
-        (tester) async {
+    testWidgets('renders all verified minimal sections cleanly', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestableScreen());
       await tester.pumpAndSettle();
 
-      // Section 1: Brand Hero
+      // Section 1: Hero
+      expect(find.text('ABOUT AL SEWAR'), findsOneWidget);
       expect(find.text('AL SEWAR AUTO CENTER'), findsOneWidget);
-      expect(find.text('Excellence in Automotive Care'), findsOneWidget);
+      expect(find.text('11+ YRS'), findsOneWidget);
 
-      // Section 2: Overview & Pillars
-      expect(find.text('HERITAGE & CRAFTSMANSHIP'), findsOneWidget);
-      expect(find.text('Pioneering Luxury Automotive Care'), findsOneWidget);
-      expect(find.text('Precision Detailing'), findsOneWidget);
-      expect(find.text('Certified Technicians'), findsOneWidget);
-      expect(find.text('Digital Transparency'), findsOneWidget);
+      // Section 2: Who We Are
+      expect(find.text('Who We Are'), findsOneWidget);
+      expect(
+        find.text('Best Car Repair Service in Northern Emirates'),
+        findsOneWidget,
+      );
+      expect(find.text('11+ Years'), findsOneWidget);
+      expect(find.text('20+ Years'), findsOneWidget);
+      expect(find.text('10 Locations'), findsOneWidget);
+      expect(find.text('One-Stop'), findsOneWidget);
 
-      // Section 3: Metrics At a Glance
-      expect(find.text('At a Glance'), findsOneWidget);
-      expect(find.text('10+'), findsOneWidget);
-      expect(find.text('Years of Excellence'), findsOneWidget);
-      expect(find.text('25k+'), findsOneWidget);
-      expect(find.text('Vehicles Serviced'), findsOneWidget);
-      expect(find.text('99%'), findsOneWidget);
-
-      // Section 4: Mission & Vision
+      // Section 3: Mission & Vision
+      expect(find.text('Mission & Vision'), findsOneWidget);
       expect(find.text('Our Mission'), findsOneWidget);
       expect(find.text('Our Vision'), findsOneWidget);
 
-      // Section 5: Core Services
-      expect(find.text('Core Services'), findsOneWidget);
+      // Section 4: Our Services
+      expect(find.text('Our Services'), findsOneWidget);
       expect(find.text('VIEW ALL'), findsOneWidget);
-      expect(find.text('Express Wash & Detailing'), findsOneWidget);
-      expect(find.text('Interior Preservation'), findsOneWidget);
-      expect(find.text('Ceramic & Paint Protection'), findsOneWidget);
-      expect(find.text('Diagnostics & Maintenance'), findsOneWidget);
+      expect(find.text('Tyre Services'), findsOneWidget);
+      expect(find.text('Mechanical'), findsOneWidget);
+      expect(find.text('Body Services'), findsOneWidget);
+      expect(find.text('Detailing'), findsOneWidget);
 
-      // Section 6: Our Branches
-      expect(find.text('Al Sewar Branch Network'), findsOneWidget);
-      expect(find.text('2 Locations Active'), findsOneWidget);
-      expect(find.text('Al Sewar Riyadh Olaya'), findsOneWidget);
-      expect(find.text('Al Sewar Jeddah Corniche'), findsOneWidget);
+      // Section 5: Our Presence
+      expect(find.text('Our Presence'), findsOneWidget);
       expect(find.text('Explore on Map'), findsOneWidget);
       expect(find.text('View All Service Centers'), findsOneWidget);
+      expect(find.text('Al Sewar Kalba HQ'), findsOneWidget);
 
-      // Section 7: Verified Support
-      expect(find.text('Verified Support'), findsOneWidget);
-      expect(find.text('Direct Concierge & Helpdesk'), findsOneWidget);
-      expect(find.text('Customer Helpline'), findsOneWidget);
-      expect(find.text('Support Email'), findsOneWidget);
-      expect(find.text('WhatsApp Concierge'), findsOneWidget);
-      expect(find.text('Operating Hours'), findsOneWidget);
+      // Section 6: Official Website
+      expect(find.text('Visit Our Website'), findsOneWidget);
+      expect(find.text('www.alsewarauto.com'), findsOneWidget);
+
+      // Section 7: Contact & Support
+      expect(find.text('Contact & Support'), findsOneWidget);
+      expect(find.text('+971 9 277 7291'), findsOneWidget);
+      expect(find.text('+971 56 167 1673'), findsOneWidget);
+      expect(find.text('info@alsewarauto.com'), findsOneWidget);
     });
+
+    testWidgets(
+      'Tapping Read more expands the story and toggles to Read less',
+      (tester) async {
+        await tester.pumpWidget(buildTestableScreen());
+        await tester.pumpAndSettle();
+
+        final readMore = find.text('Read more');
+        expect(readMore, findsOneWidget);
+
+        await tester.tap(readMore);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Read less'), findsOneWidget);
+        expect(
+          find.textContaining('supported by modern diagnostic equipment'),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.text('Read less'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Read more'), findsOneWidget);
+      },
+    );
 
     testWidgets('Tapping VIEW ALL navigates to ServicesScreen', (tester) async {
       await tester.pumpWidget(buildTestableScreen());
@@ -192,8 +227,9 @@ void main() {
       expect(find.byType(ServicesScreen), findsOneWidget);
     });
 
-    testWidgets('Tapping Explore on Map navigates to BranchMapScreen',
-        (tester) async {
+    testWidgets('Tapping Explore on Map navigates to BranchMapScreen', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestableScreen());
       await tester.pumpAndSettle();
 
@@ -211,30 +247,32 @@ void main() {
     });
 
     testWidgets(
-        'Tapping View All Service Centers navigates to BranchListScreen',
-        (tester) async {
+      'Tapping View All Service Centers navigates to BranchListScreen',
+      (tester) async {
+        await tester.pumpWidget(buildTestableScreen());
+        await tester.pumpAndSettle();
+
+        final listButton = find.text('View All Service Centers');
+        await tester.scrollUntilVisible(
+          listButton,
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.tap(listButton);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(find.byType(BranchListScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets('Tapping branch mini card navigates to BranchDetailScreen', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestableScreen());
       await tester.pumpAndSettle();
 
-      final listButton = find.text('View All Service Centers');
-      await tester.scrollUntilVisible(
-        listButton,
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(listButton);
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.byType(BranchListScreen), findsOneWidget);
-    });
-
-    testWidgets('Tapping branch mini card navigates to BranchDetailScreen',
-        (tester) async {
-      await tester.pumpWidget(buildTestableScreen());
-      await tester.pumpAndSettle();
-
-      final branchCard = find.text('Al Sewar Riyadh Olaya');
+      final branchCard = find.text('Al Sewar Kalba HQ');
       await tester.scrollUntilVisible(
         branchCard,
         300,
@@ -247,11 +285,40 @@ void main() {
       expect(find.byType(BranchDetailScreen), findsOneWidget);
     });
 
-    testWidgets('Renders properly without overflow on 320px width device',
-        (tester) async {
+    testWidgets('Renders properly without overflow on 320px width device', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(320, 640);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(buildTestableScreen());
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Renders properly without overflow on 390px standard device', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390 * 2, 844 * 2);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(buildTestableScreen());
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Renders properly without overflow on 480px large device', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(480 * 2, 900 * 2);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(buildTestableScreen());
       await tester.pumpAndSettle();

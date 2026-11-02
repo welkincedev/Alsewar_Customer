@@ -149,15 +149,14 @@ void main() {
         final scrollableFinder = find.byType(SingleChildScrollView);
         expect(scrollableFinder, findsOneWidget);
 
-        await tester.drag(scrollableFinder, const Offset(0, -600));
+        final bottomFinder = find.byKey(const Key('featured_offers_bottom'));
+        await tester.ensureVisible(bottomFinder);
         await tester.pumpAndSettle();
 
         // 3. FeaturedOffers section is completely visible
         expect(find.byType(FeaturedOffers), findsOneWidget);
         expect(find.text('Featured Offers'), findsOneWidget);
-        expect(find.text('VIEW ALL'), findsWidgets);
-        expect(find.text('Full Exterior & Polish'), findsOneWidget);
-        expect(find.text('Save 20%'), findsOneWidget);
+        expect(find.text('See All'), findsOneWidget);
 
         // 4. Bottom of the Featured Offers section sits strictly above the floating nav bar
         final offersRect = tester.getRect(find.byType(FeaturedOffers));

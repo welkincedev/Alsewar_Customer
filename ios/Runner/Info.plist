@@ -68,6 +68,10 @@
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Al Sewar Carwash needs your location to show the nearest branches and calculate driving distances.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Al Sewar Auto Center requires camera access to take a profile picture.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Al Sewar Auto Center requires access to your photo library to select a profile picture.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>whatsapp</string>

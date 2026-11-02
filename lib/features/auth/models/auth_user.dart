@@ -10,6 +10,7 @@ class AuthUser {
   final String? membershipTier;
   final int? loyaltyPoints;
   final String? membershipId;
+  final String? profilePicture;
 
   const AuthUser({
     required this.id,
@@ -23,6 +24,7 @@ class AuthUser {
     this.membershipTier,
     this.loyaltyPoints,
     this.membershipId,
+    this.profilePicture,
   });
 
   /// Parse customer user JSON safely handling nullable or missing fields.
@@ -69,6 +71,7 @@ class AuthUser {
       membershipTier: parsedTier,
       loyaltyPoints: parsedPoints,
       membershipId: parsedCardId,
+      profilePicture: json['profile_picture']?.toString(),
     );
   }
 
@@ -85,6 +88,7 @@ class AuthUser {
       if (membershipTier != null) 'membership_tier': membershipTier,
       if (loyaltyPoints != null) 'loyalty_points': loyaltyPoints,
       if (membershipId != null) 'membership_id': membershipId,
+      if (profilePicture != null) 'profile_picture': profilePicture,
     };
   }
 
@@ -100,6 +104,7 @@ class AuthUser {
     String? membershipTier,
     int? loyaltyPoints,
     String? membershipId,
+    String? profilePicture,
   }) {
     return AuthUser(
       id: id ?? this.id,
@@ -113,6 +118,7 @@ class AuthUser {
       membershipTier: membershipTier ?? this.membershipTier,
       loyaltyPoints: loyaltyPoints ?? this.loyaltyPoints,
       membershipId: membershipId ?? this.membershipId,
+      profilePicture: profilePicture ?? this.profilePicture,
     );
   }
 

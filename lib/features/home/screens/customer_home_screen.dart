@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../about/screens/about_us_screen.dart';
 import '../../auth/models/auth_user.dart';
+import '../../auth/viewmodels/auth_viewmodel.dart';
 import '../../support/screens/whatsapp_support_screen.dart';
 import '../views/home_screen.dart';
 import '../widgets/floating_pill_nav_bar.dart';
@@ -12,7 +13,7 @@ import '../widgets/floating_pill_nav_bar.dart';
 /// 1. About Us
 /// 2. Home (Default active tab)
 /// 3. WhatsApp
-class CustomerMainShell extends ConsumerStatefulWidget {
+class CustomerMainShell extends StatelessWidget {
   final AuthUser user;
   final int initialIndex;
   final List<Widget>? pages;
@@ -31,10 +32,66 @@ class CustomerMainShell extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<CustomerMainShell> createState() => _CustomerMainShellState();
+  Widget build(BuildContext context) {
+    return _ProviderScopeDetector(
+      child: _CustomerMainShellContent(
+        user: user,
+        initialIndex: initialIndex,
+        pages: pages,
+        navItems: navItems,
+        floatingActionButton: floatingActionButton,
+        floatingActionButtonLocation: floatingActionButtonLocation,
+      ),
+    );
+  }
 }
 
-class _CustomerMainShellState extends ConsumerState<CustomerMainShell> {
+/// Fallback wrapper that injects a local [ProviderScope] only if none exists in ancestors.
+class _ProviderScopeDetector extends StatelessWidget {
+  final Widget child;
+
+  const _ProviderScopeDetector({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    bool hasScope = true;
+    try {
+      ProviderScope.containerOf(context, listen: false);
+    } catch (_) {
+      hasScope = false;
+    }
+
+    if (hasScope) {
+      return child;
+    }
+    return ProviderScope(child: child);
+  }
+}
+
+class _CustomerMainShellContent extends ConsumerStatefulWidget {
+  final AuthUser user;
+  final int initialIndex;
+  final List<Widget>? pages;
+  final List<PillNavItem>? navItems;
+  final Widget? floatingActionButton;
+  final FloatingActionButtonLocation? floatingActionButtonLocation;
+
+  const _CustomerMainShellContent({
+    required this.user,
+    this.initialIndex = 1,
+    this.pages,
+    this.navItems,
+    this.floatingActionButton,
+    this.floatingActionButtonLocation,
+  });
+
+  @override
+  ConsumerState<_CustomerMainShellContent> createState() =>
+      _CustomerMainShellContentState();
+}
+
+class _CustomerMainShellContentState
+    extends ConsumerState<_CustomerMainShellContent> {
   late int _currentIndex;
 
   @override
@@ -45,16 +102,20 @@ class _CustomerMainShellState extends ConsumerState<CustomerMainShell> {
 
   void _onTabSelected(int index) {
     FocusManager.instance.primaryFocus?.unfocus();
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     setState(() => _currentIndex = index);
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authViewModelProvider).value;
+    final currentUser = authState?.user ?? widget.user;
+
     final pages =
         widget.pages ??
         [
           const AboutUsScreen(),
-          HomeScreen(user: widget.user),
+          HomeScreen(user: currentUser),
           const WhatsAppSupportScreen(),
         ];
 

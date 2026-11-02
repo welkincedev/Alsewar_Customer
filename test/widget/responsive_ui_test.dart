@@ -370,6 +370,30 @@ class _FakeAuthService implements AuthService {
   Future<AuthUser> getCurrentCustomer(String accessToken) async => testUser;
 
   @override
+  Future<AuthUser> updateProfile({
+    required String accessToken,
+    String? firstName,
+    String? lastName,
+    String? phone,
+    String? email,
+    List<int>? profilePictureBytes,
+    String? profilePictureFilename,
+    String? profilePicturePath,
+    void Function(int, int)? onSendProgress,
+  }) async => testUser;
+
+  @override
+  Future<AuthUser> uploadProfilePicture({
+    required String accessToken,
+    required List<int> imageBytes,
+    required String filename,
+    void Function(int sent, int total)? onSendProgress,
+  }) async => testUser;
+
+  @override
+  Future<void> removeProfilePicture({required String accessToken}) async {}
+
+  @override
   Future<LoginResponse> login(LoginRequest request) async {
     throw UnimplementedError();
   }

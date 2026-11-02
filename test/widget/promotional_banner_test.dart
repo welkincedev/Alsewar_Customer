@@ -79,7 +79,7 @@ void main() {
 
   group('PromotionalBanner Fallback Carousel & Aspect Ratio Tests', () {
     testWidgets(
-      'Empty backend banners render 3 local fallback banners with 2.7:1 aspect ratio',
+      'Empty backend banners render 3 local fallback banners with 2:1 aspect ratio',
       (tester) async {
         await tester.pumpWidget(
           buildTestWidget(
@@ -92,11 +92,11 @@ void main() {
         expect(find.byType(PromotionalBanner), findsOneWidget);
         expect(find.byType(PageView), findsOneWidget);
 
-        // AspectRatio widget enforces exactly 2.7:1 (1080 x 400)
+        // AspectRatio widget enforces exactly 2:1
         final aspectRatioFinder = find.byType(AspectRatio);
         expect(aspectRatioFinder, findsOneWidget);
         final aspectRatioWidget = tester.widget<AspectRatio>(aspectRatioFinder);
-        expect(aspectRatioWidget.aspectRatio, equals(2.7));
+        expect(aspectRatioWidget.aspectRatio, equals(2.0));
 
         // Banner 1: Premium Auto Care
         expect(find.text('Al Sewar Auto Center'), findsOneWidget);

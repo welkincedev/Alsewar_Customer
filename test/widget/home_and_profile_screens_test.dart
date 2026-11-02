@@ -10,6 +10,7 @@ import 'package:carwashapp/features/auth/viewmodels/auth_providers.dart';
 import 'package:carwashapp/features/home/screens/customer_home_screen.dart';
 import 'package:carwashapp/features/home/views/home_screen.dart';
 import 'package:carwashapp/features/home/widgets/featured_offers.dart';
+import 'package:carwashapp/features/home/widgets/home_header.dart';
 import 'package:carwashapp/features/home/widgets/home_quick_actions.dart';
 import 'package:carwashapp/features/home/widgets/home_recent_services_section.dart';
 import 'package:carwashapp/features/home/widgets/home_vehicle_section.dart';
@@ -124,15 +125,10 @@ void main() {
 
         await tester.pump();
 
-        // 1. HomeHeader: Greeting with user name
-        expect(find.text('Good Day,'), findsOneWidget);
-        expect(find.text('Ahmed Al-Mansoor'), findsWidgets);
-
         // 2. LoyaltyCard: Tier & coins
         expect(find.byType(LoyaltyCard), findsOneWidget);
-        expect(find.text('GOLD MEMBER'), findsOneWidget);
-        expect(find.text('AVAILABLE BALANCE'), findsOneWidget);
-        expect(find.text('2,450'), findsOneWidget);
+        expect(find.text('GOLD'), findsOneWidget);
+        expect(find.text('2,450 Coins'), findsOneWidget);
 
         // 3. Quick Actions: 7 Service Shortcuts + More + Header
         expect(find.byType(HomeQuickActions), findsOneWidget);
@@ -157,7 +153,7 @@ void main() {
       },
     );
 
-    testWidgets('LoyaltyCard displays configurable points, tier and progress', (
+    testWidgets('LoyaltyCard displays configurable points, tier and greeting', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -176,16 +172,13 @@ void main() {
         ),
       );
 
-      expect(find.text('PLATINUM MEMBER'), findsOneWidget);
-      expect(find.text('5,800'), findsOneWidget);
-      expect(find.text('Pts'), findsOneWidget);
-      expect(find.text('Sultan Al-Otaibi'), findsOneWidget);
-      expect(find.text('200 pts to Diamond'), findsOneWidget);
-      expect(find.text('Preview Tier'), findsOneWidget);
+      expect(find.text('Hi, Sultan Al-Otaibi'), findsOneWidget);
+      expect(find.text('PLATINUM'), findsOneWidget);
+      expect(find.text('5,800 Pts'), findsOneWidget);
     });
 
     testWidgets(
-      'ProfileScreen renders MY PROFILE, MY ACTIVITIES and SUPPORT & SETTINGS',
+      'ProfileScreen renders summary card, MY ACTIVITIES and SUPPORT & SETTINGS',
       (tester) async {
         await tester.pumpWidget(
           const ProviderScope(
@@ -199,8 +192,8 @@ void main() {
         expect(find.text('Ahmed Al-Mansoor'), findsWidgets);
         expect(find.text('customer@alsewar.com'), findsWidgets);
 
-        // Section titles
-        expect(find.text('MY PROFILE'), findsOneWidget);
+        // Section titles (MY PROFILE was intentionally removed in favor of upper summary card)
+        expect(find.text('MY PROFILE'), findsNothing);
         expect(find.text('MY ACTIVITIES'), findsOneWidget);
         expect(find.text('SUPPORT & SETTINGS'), findsOneWidget);
 
@@ -284,6 +277,69 @@ void main() {
         expect(find.text('Open Profile'), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'HomeScreen responsive audit at 320, 390, and 480 logical-pixel widths with zero overflow',
+      (tester) async {
+        const viewports = [
+          Size(320, 568), // Compact
+          Size(390, 844), // Standard
+          Size(480, 900), // Large
+        ];
+
+        for (final vp in viewports) {
+          tester.view.physicalSize = vp;
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+
+          await tester.pumpWidget(
+            ProviderScope(
+              overrides: [
+                customerServicesProvider.overrideWith((ref) => mockServices),
+                vehicleViewModelProvider.overrideWith(
+                  () => _FakeVehicleViewModel(),
+                ),
+                visitViewModelProvider.overrideWith(
+                  () => _FakeVisitViewModel(),
+                ),
+              ],
+              child: const MaterialApp(home: HomeScreen(user: testUser)),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          // 1. Compact white header with notification and profile icons
+          expect(find.byType(HomeHeader), findsOneWidget);
+          expect(
+            find.byWidgetPredicate(
+              (w) => w is Semantics && w.properties.label == 'Notifications',
+            ),
+            findsOneWidget,
+          );
+          expect(
+            find.byWidgetPredicate(
+              (w) => w is Semantics && w.properties.label == 'My Profile',
+            ),
+            findsOneWidget,
+          );
+
+          // 3. Seven main service shortcuts + More
+          expect(find.byType(HomeQuickActions), findsOneWidget);
+          expect(find.text('Our Services'), findsOneWidget);
+          expect(find.text('More'), findsOneWidget);
+
+          // 4. Promotional banner carousel
+          expect(find.byType(PromotionalBanner), findsOneWidget);
+
+          // 5. Featured Offers
+          expect(find.byType(FeaturedOffers), findsOneWidget);
+
+          // Zero RenderFlex overflow at all viewports
+          expect(tester.takeException(), isNull);
+        }
+      },
+    );
   });
 }
 
@@ -329,6 +385,30 @@ class _FakeWidgetTokenStorage implements TokenStorage {
 class _FakeWidgetAuthService implements AuthService {
   @override
   Future<AuthUser> getCurrentCustomer(String accessToken) async => testUser;
+
+  @override
+  Future<AuthUser> updateProfile({
+    required String accessToken,
+    String? firstName,
+    String? lastName,
+    String? phone,
+    String? email,
+    List<int>? profilePictureBytes,
+    String? profilePictureFilename,
+    String? profilePicturePath,
+    void Function(int, int)? onSendProgress,
+  }) async => testUser;
+
+  @override
+  Future<AuthUser> uploadProfilePicture({
+    required String accessToken,
+    required List<int> imageBytes,
+    required String filename,
+    void Function(int sent, int total)? onSendProgress,
+  }) async => testUser;
+
+  @override
+  Future<void> removeProfilePicture({required String accessToken}) async {}
 
   @override
   Future<LoginResponse> login(LoginRequest request) async {

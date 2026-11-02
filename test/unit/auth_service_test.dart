@@ -157,5 +157,174 @@ void main() {
       expect(result['access'], 'new_access_token');
       expect(result['refresh'], 'rotated_refresh_token');
     });
+
+    test(
+      'updateProfile sends PATCH to /api/customer/profile/ with bearer token',
+      () async {
+        mockAdapter.fetchHandler = (options) {
+          expect(options.method, 'PATCH');
+          expect(options.path, '/api/customer/profile/');
+          expect(options.headers['Authorization'], 'Bearer valid_jwt_token');
+          final data = options.data as Map<String, dynamic>;
+          expect(data['first_name'], 'Salman');
+          expect(data['last_name'], 'Al Balushi');
+          expect(data['email'], 'salman.albalushi@example.com');
+
+          return ResponseBody.fromString(
+            jsonEncode({
+              'id': 15,
+              'username': 'salman_k',
+              'first_name': 'Salman',
+              'last_name': 'Al Balushi',
+              'email': 'salman.albalushi@example.com',
+              'phone': '+96891234567',
+              'role': 'CUSTOMER',
+              'profile_picture': 'http://10.0.2.2:8001/media/profile_pictures/customer_15/avatar.jpg',
+              'is_active': true,
+            }),
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        };
+
+        final updatedUser = await authService.updateProfile(
+          accessToken: 'valid_jwt_token',
+          firstName: 'Salman',
+          lastName: 'Al Balushi',
+          email: 'salman.albalushi@example.com',
+        );
+
+        expect(updatedUser.id, 15);
+        expect(updatedUser.firstName, 'Salman');
+        expect(updatedUser.lastName, 'Al Balushi');
+        expect(updatedUser.email, 'salman.albalushi@example.com');
+        expect(updatedUser.profilePicture, contains('avatar.jpg'));
+      },
+    );
+
+    test('updateProfile sends multipart/form-data when profilePictureBytes is provided', () async {
+      mockAdapter.fetchHandler = (options) {
+        expect(options.path, '/api/customer/profile/');
+        expect(options.headers['Authorization'], 'Bearer valid_jwt_token');
+        expect(
+          options.headers['Content-Type'],
+          contains('multipart/form-data'),
+        );
+        expect(options.data, isA<FormData>());
+        final formData = options.data as FormData;
+        expect(
+          formData.fields.any(
+            (f) => f.key == 'first_name' && f.value == 'Salman',
+          ),
+          isTrue,
+        );
+        expect(formData.files.any((f) => f.key == 'profile_picture'), isTrue);
+
+        return ResponseBody.fromString(
+          jsonEncode({
+            'id': 15,
+            'username': 'salman_k',
+            'first_name': 'Salman',
+            'last_name': 'Al Balushi',
+            'email': 'salman.albalushi@example.com',
+            'role': 'CUSTOMER',
+            'profile_picture': 'http://10.0.2.2:8001/media/profile_pictures/customer_15/new_pic.jpg',
+            'is_active': true,
+          }),
+          200,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        );
+      };
+
+      final updatedUser = await authService.updateProfile(
+        accessToken: 'valid_jwt_token',
+        firstName: 'Salman',
+        lastName: 'Al Balushi',
+        email: 'salman.albalushi@example.com',
+        profilePictureBytes: [0xFF, 0xD8, 0xFF, 0xE0],
+        profilePictureFilename: 'new_pic.jpg',
+      );
+
+      expect(updatedUser.id, 15);
+      expect(updatedUser.profilePicture, contains('new_pic.jpg'));
+    });
+
+    test('updateProfile falls back to /api/customer/me/ on 404', () async {
+      int callCount = 0;
+      mockAdapter.fetchHandler = (options) {
+        callCount++;
+        if (callCount == 1) {
+          expect(options.path, '/api/customer/profile/');
+          return ResponseBody.fromString(
+            jsonEncode({'detail': 'Not found.'}),
+            404,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        } else {
+          expect(options.path, '/api/customer/me/');
+          return ResponseBody.fromString(
+            jsonEncode({
+              'id': 15,
+              'username': 'salman_k',
+              'first_name': 'Salman',
+              'last_name': 'Al Balushi',
+              'email': 'salman@example.com',
+              'role': 'CUSTOMER',
+              'is_active': true,
+            }),
+            200,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        }
+      };
+
+      final updatedUser = await authService.updateProfile(
+        accessToken: 'valid_jwt_token',
+        firstName: 'Salman',
+        lastName: 'Al Balushi',
+      );
+
+      expect(callCount, 2);
+      expect(updatedUser.firstName, 'Salman');
+    });
+
+    test(
+      'updateProfile surfaces DRF validation errors with clean message',
+      () async {
+        mockAdapter.fetchHandler = (options) {
+          return ResponseBody.fromString(
+            jsonEncode({
+              'email': ['A user with this email already exists.'],
+            }),
+            400,
+            headers: {
+              Headers.contentTypeHeader: [Headers.jsonContentType],
+            },
+          );
+        };
+
+        expect(
+          () => authService.updateProfile(
+            accessToken: 'valid_jwt_token',
+            email: 'duplicate@example.com',
+          ),
+          throwsA(
+            predicate<Exception>(
+              (e) => e.toString().contains(
+                'Email: A user with this email already exists.',
+              ),
+            ),
+          ),
+        );
+      },
+    );
   });
 }

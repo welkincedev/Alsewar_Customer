@@ -109,7 +109,7 @@ class MembershipCardTheme {
           progressIndicatorColor: const Color(0xFFBAC4CF),
           affordanceColor: const Color(0xFFBAC4CF),
           dividerColor: Colors.white.withValues(alpha: 0.10),
-          backgroundImageAsset: 'assets/images/voucher_silver_pass.png',
+          backgroundImageAsset: 'assets/images/slbg.png',
           passLabel: 'SILVER VIP PASS',
           textEmbossShadow: const [
             Shadow(
@@ -156,7 +156,7 @@ class MembershipCardTheme {
           progressIndicatorColor: AppColors.champagneGold,
           affordanceColor: AppColors.champagneGold,
           dividerColor: Colors.white.withValues(alpha: 0.10),
-          backgroundImageAsset: 'assets/images/voucher_gold_pass.png',
+          backgroundImageAsset: 'assets/images/gdbg.png',
           passLabel: 'GOLD VIP PASS',
           textEmbossShadow: const [
             Shadow(
@@ -218,7 +218,7 @@ class MembershipCardTheme {
           progressIndicatorColor: const Color(0xFFE2E7EE),
           affordanceColor: const Color(0xFFD0D6E0),
           dividerColor: Colors.white.withValues(alpha: 0.12),
-          backgroundImageAsset: 'assets/images/voucher_platinum_pass.png',
+          backgroundImageAsset: 'assets/images/plbg.png',
           passLabel: 'PLATINUM VIP PASS',
           textEmbossShadow: const [
             Shadow(

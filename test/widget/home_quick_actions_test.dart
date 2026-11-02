@@ -1,3 +1,4 @@
+import 'package:carwashapp/app/theme/app_colors.dart';
 import 'package:carwashapp/features/auth/models/auth_user.dart';
 import 'package:carwashapp/features/branches/models/branch.dart';
 import 'package:carwashapp/features/branches/services/location_service.dart';
@@ -116,7 +117,7 @@ void main() {
     );
 
     testWidgets(
-      'Cards feature Option A Champagne Gold metallic gradient, border, and top highlight',
+      'Cards feature Pure White surface, subtle border, subtle shadow, and Image illustration with BoxFit.contain',
       (tester) async {
         await tester.pumpWidget(
           createTestWidget(child: const HomeQuickActions(user: testUser)),
@@ -142,29 +143,32 @@ void main() {
           // 16px corner radius
           expect(decoration.borderRadius, equals(BorderRadius.circular(16)));
 
-          // Champagne gold metallic gradient
-          expect(decoration.gradient, isA<LinearGradient>());
-          final grad = decoration.gradient as LinearGradient;
-          expect(
-            grad.colors,
-            equals(const [
-              Color(0xFFFFE5A3),
-              Color(0xFFC6A66B),
-              Color(0xFFE0B83F),
-            ]),
-          );
+          // Pure white surface
+          expect(decoration.color, equals(AppColors.pureWhite));
 
-          // Thin champagne gold border (#D8B76E, width: 0.8)
+          // Thin subtle border
           expect(decoration.border, isNotNull);
-          expect(decoration.border!.top.color, equals(const Color(0xFFD8B76E)));
-          expect(decoration.border!.top.width, equals(0.8));
+          expect(decoration.border!.top.color, equals(AppColors.subtleBorder));
+          expect(decoration.border!.top.width, equals(1.0));
 
-          // Subtle glossy top highlight present
-          final stackFinder = find.descendant(
+          // Subtle shadow present
+          expect(decoration.boxShadow, isNotNull);
+
+          // Image illustration with BoxFit.contain
+          final imageFinder = find.descendant(
             of: find.byWidget(semantics),
-            matching: find.byType(Stack),
+            matching: find.byType(Image),
           );
-          expect(stackFinder, findsOneWidget);
+          final image = tester.widget<Image>(imageFinder);
+          expect(image.fit, equals(BoxFit.contain));
+
+          // Navy label text
+          final textFinder = find.descendant(
+            of: find.byWidget(semantics),
+            matching: find.byType(Text),
+          );
+          final textWidget = tester.widget<Text>(textFinder);
+          expect(textWidget.style?.color, equals(AppColors.deepNavy));
 
           // AnimatedScale widget present for press animation
           final scaleFinder = find.descendant(

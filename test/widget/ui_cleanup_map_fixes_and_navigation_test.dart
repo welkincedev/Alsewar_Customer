@@ -143,11 +143,11 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 400));
 
-        // Verify snackbar is configured with floating overlay and approximately 2.5-second duration
+        // Verify snackbar is configured with floating overlay and 3-second duration
         final snackBarFinder = find.byType(SnackBar);
         expect(snackBarFinder, findsOneWidget);
         final snackBar = tester.widget<SnackBar>(snackBarFinder);
-        expect(snackBar.duration, equals(const Duration(milliseconds: 2500)));
+        expect(snackBar.duration, equals(const Duration(seconds: 3)));
         expect(snackBar.behavior, equals(SnackBarBehavior.floating));
         expect(
           find.textContaining('Located! Nearest branch: Al Sewar Olaya'),
@@ -251,25 +251,29 @@ void main() {
       },
     );
 
-    testWidgets(
-      'HomeQuickActions has exactly 4 shortcuts: Branches, Services, History, Vehicles',
-      (tester) async {
-        await tester.pumpWidget(
-          createTestWidget(
-            child: const Scaffold(body: HomeQuickActions(user: testUser)),
-          ),
-        );
-        await tester.pumpAndSettle();
+    testWidgets('HomeQuickActions renders 7 service shortcuts and More', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          child: const Scaffold(body: HomeQuickActions(user: testUser)),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.text('Branches'), findsOneWidget);
-        expect(find.text('Services'), findsOneWidget);
-        expect(find.text('History'), findsOneWidget);
-        expect(find.text('Vehicles'), findsOneWidget);
+      expect(find.text('Our Services'), findsOneWidget);
+      expect(find.text('Tyre Services'), findsOneWidget);
+      expect(find.text('Auto Repair'), findsOneWidget);
+      expect(find.text('Oil & Battery'), findsOneWidget);
+      expect(find.text('Car Wash'), findsOneWidget);
+      expect(find.text('Ceramic Coating'), findsOneWidget);
+      expect(find.text('AC Servicing'), findsOneWidget);
+      expect(find.text('Car Painting'), findsOneWidget);
+      expect(find.text('More'), findsOneWidget);
 
-        // Concierge shortcut is replaced by Vehicles
-        expect(find.text('Concierge'), findsNothing);
-      },
-    );
+      // Concierge shortcut is not present
+      expect(find.text('Concierge'), findsNothing);
+    });
 
     testWidgets(
       'PromotionalBanner renders before FeaturedOffers and displays fallback carousel when backend is empty',
@@ -305,7 +309,8 @@ void main() {
       expect(scrollableFinder, findsOneWidget);
 
       // Scroll to bottom
-      await tester.drag(scrollableFinder, const Offset(0, -600));
+      final bottomFinder = find.byKey(const Key('featured_offers_bottom'));
+      await tester.ensureVisible(bottomFinder);
       await tester.pumpAndSettle();
 
       final navBarFinder = find.byType(FloatingPillNavBar);
@@ -319,7 +324,7 @@ void main() {
   });
 
   group('4. About Us Simplification', () {
-    testWidgets('AboutUsScreen renders the 5 streamlined high-value sections', (
+    testWidgets('AboutUsScreen renders the verified minimal sections', (
       tester,
     ) async {
       await tester.pumpWidget(createTestWidget(child: const AboutUsScreen()));
@@ -327,29 +332,27 @@ void main() {
 
       // 1. Brief Intro
       expect(find.text('AL SEWAR AUTO CENTER'), findsOneWidget);
-      expect(find.text('Excellence in Automotive Care'), findsOneWidget);
 
       // 2. Mission & Vision
       expect(find.text('Our Mission'), findsOneWidget);
       expect(find.text('Our Vision'), findsOneWidget);
 
       // 3. Main Service Categories
-      expect(find.text('Core Services'), findsOneWidget);
-      expect(find.text('Express Wash & Detailing'), findsOneWidget);
-      expect(find.text('Interior Preservation'), findsOneWidget);
-      expect(find.text('Ceramic & Paint Protection'), findsOneWidget);
-      expect(find.text('Diagnostics & Maintenance'), findsOneWidget);
+      expect(find.text('Our Services'), findsOneWidget);
+      expect(find.text('Tyre Services'), findsOneWidget);
+      expect(find.text('Mechanical'), findsOneWidget);
+      expect(find.text('Body Services'), findsOneWidget);
+      expect(find.text('Detailing'), findsOneWidget);
 
       // 4. Branch Access
-      expect(find.text('Al Sewar Branch Network'), findsOneWidget);
+      expect(find.text('Our Presence'), findsOneWidget);
       expect(find.text('Explore on Map'), findsOneWidget);
       expect(find.text('View All Service Centers'), findsOneWidget);
 
       // 5. Verified Support
-      expect(find.text('Verified Support'), findsOneWidget);
-      expect(find.text('Customer Helpline'), findsOneWidget);
-      expect(find.text('Support Email'), findsOneWidget);
-      expect(find.text('WhatsApp Concierge'), findsOneWidget);
+      expect(find.text('Contact & Support'), findsOneWidget);
+      expect(find.text('+971 9 277 7291'), findsOneWidget);
+      expect(find.text('info@alsewarauto.com'), findsOneWidget);
     });
   });
 

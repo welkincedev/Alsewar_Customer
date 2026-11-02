@@ -162,40 +162,6 @@ class HomeHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-
-        // ── Personalized Customer Greeting ──────────────────────────
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Good Day,',
-                style: AppTextStyles.bodySecondary.copyWith(
-                  fontFamily: AppTextStyles.bodyFont,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                user.displayName.isNotEmpty
-                    ? user.displayName
-                    : 'Valued Customer',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.heading.copyWith(
-                  fontFamily: AppTextStyles.headingFont,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.3,
-                  color: AppColors.deepBlack,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }

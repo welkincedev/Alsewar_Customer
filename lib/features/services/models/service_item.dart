@@ -14,6 +14,7 @@ class ServiceItem {
   final String? tagline;
   final String? imageAsset;
   final IconData? icon;
+  final String? iconAsset;
   final List<String>? highlights;
 
   const ServiceItem({
@@ -25,6 +26,7 @@ class ServiceItem {
     this.tagline,
     this.imageAsset,
     this.icon,
+    this.iconAsset,
     this.highlights,
   });
 
@@ -47,6 +49,51 @@ class ServiceItem {
     return resolveIconByName(name);
   }
 
+  /// Resolves the local asset illustration path for service shortcuts.
+  String get effectiveIconAsset {
+    if (iconAsset != null && iconAsset!.isNotEmpty) {
+      return iconAsset!;
+    }
+    return resolveIconAssetByName(name, category);
+  }
+
+  /// Automatically matches appropriate local icon asset for dynamic/backend services.
+  static String resolveIconAssetByName(String name, [String? category]) {
+    final lower = '${name.toLowerCase()} ${category?.toLowerCase() ?? ''}';
+    if (lower.contains('tyre') ||
+        lower.contains('tire') ||
+        lower.contains('wheel')) {
+      return 'assets/images/service_icons/tire.png';
+    }
+    if (lower.contains('oil') ||
+        lower.contains('battery') ||
+        lower.contains('fluid')) {
+      return 'assets/images/service_icons/battery.png';
+    }
+    if (lower.contains('wash') || lower.contains('hydro')) {
+      return 'assets/images/service_icons/wash.png';
+    }
+    if (lower.contains('ceramic') ||
+        lower.contains('detail') ||
+        lower.contains('polish') ||
+        lower.contains('ppf')) {
+      return 'assets/images/service_icons/detailing.png';
+    }
+    if (lower.contains('ac') ||
+        lower.contains('cooling') ||
+        lower.contains('air')) {
+      return 'assets/images/service_icons/ac.png';
+    }
+    if (lower.contains('paint') ||
+        lower.contains('color') ||
+        lower.contains('body') ||
+        lower.contains('accident') ||
+        lower.contains('bumper')) {
+      return 'assets/images/service_icons/painting.png';
+    }
+    return 'assets/images/service_icons/repair.png';
+  }
+
   factory ServiceItem.fromJson(Map<String, dynamic> json) {
     final name = (json['name'] ?? '').toString();
     final category = json['category']?.toString();
@@ -58,6 +105,7 @@ class ServiceItem {
       category: category,
       tagline: json['tagline']?.toString(),
       imageAsset: json['image_asset']?.toString() ?? json['image']?.toString(),
+      iconAsset: json['icon_asset']?.toString(),
       highlights: (json['highlights'] as List<dynamic>?)
           ?.map((e) => e.toString())
           .toList(),
@@ -73,6 +121,7 @@ class ServiceItem {
       if (category != null) 'category': category,
       if (tagline != null) 'tagline': tagline,
       if (imageAsset != null) 'image_asset': imageAsset,
+      if (iconAsset != null) 'icon_asset': iconAsset,
       if (highlights != null) 'highlights': highlights,
     };
   }
@@ -171,6 +220,7 @@ class AlSewarServiceCatalog {
       description: 'Fast and safe tyre fitting, 3D laser wheel alignment, dynamic balancing, nitrogen filling, puncture repairs and TPMS sensor calibration.',
       imageAsset: 'assets/images/service_tyre.jpg',
       icon: Icons.tire_repair_outlined,
+      iconAsset: 'assets/images/service_icons/tire.png',
       highlights: [
         'Tyre Changing & Safe Rim Fitting',
         '3D Wheel Alignment & Dynamic Balancing',
@@ -191,6 +241,7 @@ class AlSewarServiceCatalog {
       description: 'Complete care and maintenance for your vehicle. Modern diagnostic equipment and genuine quality parts for reliable engine, brake and mechanical repairs.',
       imageAsset: 'assets/images/service_mechanical.jpg',
       icon: Icons.handyman_outlined,
+      iconAsset: 'assets/images/service_icons/repair.png',
       highlights: [
         'Complete Mechanical Care & Servicing',
         'Computerized Engine Diagnostics',
@@ -211,6 +262,7 @@ class AlSewarServiceCatalog {
       description: 'High-grade synthetic lubricant replacement, OEM filter installation, electronic battery health testing, terminal cleaning and essential fluid top-ups.',
       imageAsset: 'assets/images/service_oil_battery.jpg',
       icon: Icons.oil_barrel_outlined,
+      iconAsset: 'assets/images/service_icons/battery.png',
       highlights: [
         'Premium Synthetic & Mineral Oil Replacement',
         'OEM Engine Oil Filter Exchange',
@@ -231,6 +283,7 @@ class AlSewarServiceCatalog {
       description: 'Multi-stage pH-balanced foam bath, high-pressure undercarriage wash, microfibre hand wash, wheel de-ironing, glass buffing and interior vacuuming.',
       imageAsset: 'assets/images/service_wash.jpg',
       icon: Icons.local_car_wash_outlined,
+      iconAsset: 'assets/images/service_icons/wash.png',
       highlights: [
         'Touchless High-Pressure Pre-Rinse',
         'pH-Neutral Snow Foam Bath',
@@ -252,6 +305,7 @@ class AlSewarServiceCatalog {
       description: 'Multi-stage machine paint correction followed by 9H nano-ceramic surface application for extreme mirror gloss, hydrophobic water beading and UV defense.',
       imageAsset: 'assets/images/service_ceramic.jpg',
       icon: Icons.auto_awesome_outlined,
+      iconAsset: 'assets/images/service_icons/detailing.png',
       highlights: [
         'Multi-Stage Paint Correction & Swirl Removal',
         '9H Hardness Ultra-Durable Ceramic Layer',
@@ -272,6 +326,7 @@ class AlSewarServiceCatalog {
       description: 'Digital AC system diagnostics, electronic refrigerant leak testing, precision gas recovery & recharge, compressor servicing and cabin anti-bacterial ozone sanitization.',
       imageAsset: 'assets/images/service_ac_repair.jpg',
       icon: Icons.ac_unit_outlined,
+      iconAsset: 'assets/images/service_icons/ac.png',
       highlights: [
         'AC Gas Recovery, Vacuum & Precision Recharge',
         'Electronic Leak Detection & Pressure Testing',
@@ -292,6 +347,7 @@ class AlSewarServiceCatalog {
       description: 'Computerized spectrophotometer paint matching, heated downdraft spray booth application, panel blending, scratch rectification and premium clear-coat baking.',
       imageAsset: 'assets/images/service_painting.jpg',
       icon: Icons.format_paint_outlined,
+      iconAsset: 'assets/images/service_icons/painting.png',
       highlights: [
         'Computerized Spectrophotometer Color Formulation',
         'Dust-Free Heated Downdraft Spray Booth',

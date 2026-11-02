@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_colors.dart';
 import '../../auth/models/auth_user.dart';
+import '../../auth/viewmodels/auth_viewmodel.dart';
 import '../../branches/viewmodels/branch_viewmodel.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../../services/viewmodels/service_providers.dart';
@@ -38,6 +39,9 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authViewModelProvider).value;
+    final currentUser = authState?.user ?? user;
+
     final bottomClearance = FloatingPillNavBarUtils.calculateBottomClearance(
       context,
       clearance: 20.0,
@@ -45,10 +49,10 @@ class HomeScreen extends ConsumerWidget {
 
     // Dynamic customer membership resolved directly from actual backend user data
     final membership = CustomerMembership.fromUser(
-      memberName: user.displayName,
-      membershipId: user.membershipId,
-      points: user.loyaltyPoints ?? 0,
-      backendTier: user.membershipTier,
+      memberName: currentUser.displayName,
+      membershipId: currentUser.membershipId,
+      points: currentUser.loyaltyPoints ?? 0,
+      backendTier: currentUser.membershipTier,
     );
 
     return Theme(
@@ -83,7 +87,7 @@ class HomeScreen extends ConsumerWidget {
                 children: [
                   // 1. Welcome / Hero (Emblem, Greeting, Notifications & Profile Shortcut)
                   HomeHeader(
-                    user: user,
+                    user: currentUser,
                     onNotificationTap: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -100,17 +104,17 @@ class HomeScreen extends ConsumerWidget {
                   // 2. Rewards Wallet (Dynamic Premium Membership Card)
                   LoyaltyCard(
                     membership: membership,
-                    memberName: user.displayName,
+                    memberName: currentUser.displayName,
                     membershipCategory: membership.tier.displayName,
                     pointsBalance: membership.points,
                     pointsLabel: 'Points',
-                    membershipId: user.membershipId,
+                    membershipId: currentUser.membershipId,
                     progressToNextTier: membership.progressToNextTier,
                     onExploreRewards: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ProfileScreen(user: user),
+                          builder: (_) => ProfileScreen(user: currentUser),
                         ),
                       );
                     },
@@ -118,11 +122,11 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(height: 20),
 
                   // 3. Quick Actions (Branches, Services, History, Vehicles)
-                  HomeQuickActions(user: user),
+                  HomeQuickActions(user: currentUser),
                   const SizedBox(height: 20),
 
                   // 4. Promotional Banner (Shows backend banners or 3 local fallback banners)
-                  PromotionalBanner(user: user),
+                  PromotionalBanner(user: currentUser),
                   const SizedBox(height: 18),
 
                   // 5. Featured Offers (Directly below banner section)

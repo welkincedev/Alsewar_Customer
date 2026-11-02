@@ -30,10 +30,7 @@ void main() {
         expect(theme.badgeGradient, equals(AppColors.silverBadgeGradient));
         expect(theme.badgeTextColor, equals(AppColors.deepCharcoal));
         expect(theme.badgeBorder, isNotNull);
-        expect(
-          theme.backgroundImageAsset,
-          equals('assets/images/voucher_silver_pass.png'),
-        );
+        expect(theme.backgroundImageAsset, equals('assets/images/slbg.png'));
         expect(theme.passLabel, equals('SILVER VIP PASS'));
 
         // 3. Metallic silver accents
@@ -60,10 +57,7 @@ void main() {
         expect(theme.badgeTextColor, equals(AppColors.deepCharcoal));
         expect(theme.progressIndicatorColor, equals(AppColors.champagneGold));
         expect(theme.affordanceColor, equals(AppColors.champagneGold));
-        expect(
-          theme.backgroundImageAsset,
-          equals('assets/images/voucher_gold_pass.png'),
-        );
+        expect(theme.backgroundImageAsset, equals('assets/images/gdbg.png'));
         expect(theme.passLabel, equals('GOLD VIP PASS'));
 
         expect(theme.overlayGradient, isNotNull);
@@ -87,10 +81,7 @@ void main() {
         expect(theme.badgeTextColor, equals(const Color(0xFF101216)));
         expect(theme.progressIndicatorColor, equals(const Color(0xFFE2E7EE)));
         expect(theme.affordanceColor, equals(const Color(0xFFD0D6E0)));
-        expect(
-          theme.backgroundImageAsset,
-          equals('assets/images/voucher_platinum_pass.png'),
-        );
+        expect(theme.backgroundImageAsset, equals('assets/images/plbg.png'));
         expect(theme.passLabel, equals('PLATINUM VIP PASS'));
 
         expect(theme.overlayGradient, isNotNull);

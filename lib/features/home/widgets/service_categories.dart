@@ -188,7 +188,7 @@ class _CategoryItem extends StatelessWidget {
               color: isAccent
                   ? AppColors.champagneGold
                   : AppColors.deepCharcoal,
-              size: 22,
+              size: 25,
             ),
           ),
           const SizedBox(height: 6),

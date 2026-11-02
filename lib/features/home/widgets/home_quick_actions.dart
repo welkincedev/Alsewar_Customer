@@ -24,9 +24,8 @@ import '../../services/screens/services_screen.dart';
 /// - 8th "More" shortcut navigating to the complete Available Services catalogue.
 ///
 /// Design attributes:
-/// - Approved Option A Champagne Gold metallic gradient.
-/// - Consistent outline icons with identical stroke weight (#171717).
-/// - Glossy automotive clear-coat top highlight.
+/// - White service shortcut cards with navy icons (#021C4B) and subtle shadows.
+/// - Consistent outline icons with identical stroke weight.
 /// - Clear "Our Services" section heading with "VIEW ALL" link.
 /// - Responsive tile dimensions with graceful text scaling across 320, 360, 390 and 480px.
 class HomeQuickActions extends StatelessWidget {
@@ -84,17 +83,6 @@ class HomeQuickActions extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Our Services', style: AppTextStyles.sectionHeading),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Certified care across UAE bays',
-                        style: TextStyle(
-                          fontFamily: AppTextStyles.bodyFont,
-                          fontSize: 11.5,
-                          color: AppColors.textSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
                     ],
                   ),
                 ),
@@ -153,6 +141,7 @@ class HomeQuickActions extends StatelessWidget {
                     child: _ServiceShortcutTile(
                       title: row1[i].displayShortName,
                       icon: row1[i].effectiveIcon,
+                      iconAsset: row1[i].effectiveIconAsset,
                       onTap: () {
                         if (onServiceTap != null) {
                           onServiceTap!(row1[i]);
@@ -185,6 +174,7 @@ class HomeQuickActions extends StatelessWidget {
                     child: _ServiceShortcutTile(
                       title: row2Services[i].displayShortName,
                       icon: row2Services[i].effectiveIcon,
+                      iconAsset: row2Services[i].effectiveIconAsset,
                       onTap: () {
                         if (onServiceTap != null) {
                           onServiceTap!(row2Services[i]);
@@ -207,6 +197,7 @@ class HomeQuickActions extends StatelessWidget {
                   child: _ServiceShortcutTile(
                     title: 'More',
                     icon: Icons.grid_view_rounded,
+                    iconAsset: 'assets/images/service_icons/more.png',
                     isMore: true,
                     onTap:
                         onMoreTap ??
@@ -230,13 +221,15 @@ class HomeQuickActions extends StatelessWidget {
 
 class _ServiceShortcutTile extends StatefulWidget {
   final String title;
-  final IconData icon;
+  final IconData? icon;
+  final String? iconAsset;
   final VoidCallback onTap;
   final bool isMore;
 
   const _ServiceShortcutTile({
     required this.title,
-    required this.icon,
+    this.icon,
+    this.iconAsset,
     required this.onTap,
     this.isMore = false,
   });
@@ -247,10 +240,6 @@ class _ServiceShortcutTile extends StatefulWidget {
 
 class _ServiceShortcutTileState extends State<_ServiceShortcutTile> {
   bool _isPressed = false;
-
-  static const Color champagneLight = Color(0xFFFFE5A3);
-  static const Color champagne = Color(0xFFC6A66B);
-  static const Color champagneDark = Color(0xFFE0B83F);
 
   @override
   Widget build(BuildContext context) {
@@ -270,88 +259,75 @@ class _ServiceShortcutTileState extends State<_ServiceShortcutTile> {
             duration: const Duration(milliseconds: 180),
             height: 82,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [champagneLight, champagne, champagneDark],
-                stops: [0.0, 0.55, 1.0],
-              ),
+              color: AppColors.pureWhite,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFD8B76E), width: 0.8),
+              border: Border.all(
+                color: _isPressed
+                    ? AppColors.champagneGold.withValues(alpha: 0.5)
+                    : AppColors.subtleBorder,
+                width: 1.0,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFC6A66B)
-                      .withValues(alpha: _isPressed ? 0.10 : 0.22),
+                  color: AppColors.deepNavy.withValues(
+                    alpha: _isPressed ? 0.04 : 0.08,
+                  ),
                   blurRadius: _isPressed ? 4 : 10,
-                  offset: Offset(0, _isPressed ? 1 : 4),
+                  offset: Offset(0, _isPressed ? 1 : 3),
                 ),
                 const BoxShadow(
-                  color: Colors.white54,
+                  color: Color(0x05000000),
                   blurRadius: 2,
-                  offset: Offset(-1, -1),
+                  offset: Offset(0, 1),
                 ),
               ],
             ),
-            child: Stack(
-              children: [
-                // Subtle glossy top highlight simulating automotive clear coat
-                Positioned(
-                  top: 1,
-                  left: 4,
-                  right: 4,
-                  child: Container(
-                    height: 14,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: 0.38),
-                          Colors.white.withValues(alpha: 0.02),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 6,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          widget.icon,
-                          size: 24,
-                          color: const Color(0xFF171717),
-                        ),
-                        const SizedBox(height: 6),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            widget.title,
-                            maxLines: 2,
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontFamily: AppTextStyles.bodyFont,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF171717),
-                              letterSpacing: -0.1,
-                              height: 1.15,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: widget.iconAsset != null
+                          ? Image.asset(
+                              widget.iconAsset!,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, _, _) => Icon(
+                                widget.icon ?? Icons.build_outlined,
+                                size: 28,
+                                color: AppColors.deepNavy,
+                              ),
+                            )
+                          : Icon(
+                              widget.icon ?? Icons.build_outlined,
+                              size: 28,
+                              color: AppColors.deepNavy,
                             ),
-                          ),
-                        ),
-                      ],
                     ),
-                  ),
+                    const SizedBox(height: 3),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        widget.title,
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: AppTextStyles.bodyFont,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.deepNavy,
+                          letterSpacing: -0.1,
+                          height: 1.15,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../app/theme/app_text_styles.dart';
 import '../models/membership_card_theme.dart';
@@ -8,19 +7,17 @@ import 'membership_details_bottom_sheet.dart';
 
 /// Al Sewar Auto Center — Premium Dynamic Membership Card.
 ///
-/// Follows the Desert Luxe aesthetic with dynamic tier theming:
-/// - Silver: Brushed metallic silver surface with glossy charcoal gradient overlay, metallic silver accents, and crisp high-contrast typography
-/// - Gold: Deep charcoal/black surface, champagne gold accents, white supporting text
-/// - Platinum: Dark platinum/graphite surface, refined silver accents, high-contrast typography
-///
-/// Front of Card:
-/// - Al Sewar branding
-/// - Customer name (no separate greeting inside the card)
-/// - Membership / Card ID (if supplied by backend)
-/// - Dynamic membership tier badge
-/// - Available points
-/// - Refined progress indicator towards next tier (or Platinum achieved indicator)
-/// - Subtle tap affordance opening the modal bottom sheet
+/// Features:
+/// - Compact, rounded horizontal card with consistent dimensions across all tiers
+/// - Full-bleed background artwork (`BoxFit.cover`):
+///     * Silver: `voucher_silver_pass.png`
+///     * Gold: `voucher_gold_pass.png`
+///     * Platinum: `voucher_platinum_pass.png`
+/// - Subtle localized gradient overlay behind text only, preserving 100% of the artwork luster
+/// - Content displays strictly:
+///     1. Greeting with customer's name: "Hi, [Name]" near the top-left
+///     2. Membership tier chip FIRST and coin balance SECOND in one horizontal row:
+///        e.g. `[ GOLD ]  2,450 Coins`
 class LoyaltyCard extends StatelessWidget {
   final CustomerMembership? membership;
   final String? memberName;
@@ -43,9 +40,9 @@ class LoyaltyCard extends StatelessWidget {
     this.memberName,
     this.membershipCategory,
     this.pointsBalance,
-    this.pointsLabel = 'Points',
+    this.pointsLabel = 'Coins',
     this.membershipId,
-    this.benefitsText = 'Your loyalty, rewarded.',
+    this.benefitsText,
     this.progressToNextTier,
     this.nextTierLabel,
     this.cardGradient,
@@ -55,9 +52,91 @@ class LoyaltyCard extends StatelessWidget {
     this.onCardTap,
   });
 
+  static String _resolveBackgroundImage(MembershipTier tier) {
+    switch (tier) {
+      case MembershipTier.silver:
+        return 'assets/images/slbg.png';
+      case MembershipTier.gold:
+        return 'assets/images/gdbg.png';
+      case MembershipTier.platinum:
+        return 'assets/images/plbg.png';
+    }
+  }
+
+  static Color _getTierChipColor(MembershipTier tier) {
+    switch (tier) {
+      case MembershipTier.silver:
+        return const Color(0xFFBAC4CF); // Metallic Silver
+      case MembershipTier.gold:
+        return const Color(0xFFC5A059); // Champagne Gold #C5A059
+      case MembershipTier.platinum:
+        return const Color(0xFFCCD5E0); // Platinum / light metallic slate
+    }
+  }
+
+  static Color _getTierChipBorderColor(MembershipTier tier) {
+    switch (tier) {
+      case MembershipTier.silver:
+        return const Color(0xFF8E9BA8);
+      case MembershipTier.gold:
+        return const Color(0xFFA88438);
+      case MembershipTier.platinum:
+        return const Color(0xFF9EABB8);
+    }
+  }
+
+  static Color _getGreetingColor(MembershipTier tier) {
+    switch (tier) {
+      case MembershipTier.gold:
+        return Colors.white;
+      case MembershipTier.silver:
+      case MembershipTier.platinum:
+        return const Color(0xFF171717);
+    }
+  }
+
+  static Color _getCoinBalanceColor(MembershipTier tier) {
+    switch (tier) {
+      case MembershipTier.gold:
+        return Colors.white;
+      case MembershipTier.silver:
+      case MembershipTier.platinum:
+        return const Color(0xFF171717);
+    }
+  }
+
+  static Color _getTierChipTextColor(MembershipTier tier) {
+    switch (tier) {
+      case MembershipTier.gold:
+        return Colors.white;
+      case MembershipTier.silver:
+      case MembershipTier.platinum:
+        return const Color(0xFF171717);
+    }
+  }
+
+  static List<Shadow>? _getTextShadows(
+    MembershipTier tier, {
+    bool isLarge = false,
+  }) {
+    switch (tier) {
+      case MembershipTier.gold:
+        return [
+          Shadow(
+            color: const Color(0x99000000),
+            offset: Offset(0, isLarge ? 1.5 : 1),
+            blurRadius: 3,
+          ),
+        ];
+      case MembershipTier.silver:
+      case MembershipTier.platinum:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Resolve membership domain model
+    // Resolve dynamic membership domain model from supplied arguments or user state
     final effectiveMembership =
         membership ??
         CustomerMembership.fromUser(
@@ -69,404 +148,207 @@ class LoyaltyCard extends StatelessWidget {
 
     final theme = MembershipCardTheme.forTier(effectiveMembership.tier);
 
-    // Compute progress value for progress bar
-    final double? effectiveProgress =
-        progressToNextTier ?? effectiveMembership.progressToNextTier;
+    final rawName = memberName ?? effectiveMembership.memberName;
+    final greetingName = rawName.trim().isNotEmpty
+        ? rawName.trim()
+        : 'Customer';
+    final tierDisplayName = effectiveMembership.tier.tierName.toUpperCase();
+    final coinsFormatted = CustomerMembership.formatPoints(
+      effectiveMembership.points,
+    );
+    final coinsUnit = pointsLabel.isNotEmpty && pointsLabel != 'Points'
+        ? pointsLabel
+        : 'Coins';
+
+    final backgroundAsset = _resolveBackgroundImage(effectiveMembership.tier);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GestureDetector(
-        onTap: () {
-          if (onCardTap != null) {
-            onCardTap!();
-          } else {
-            MembershipDetailsBottomSheet.show(
-              context,
-              membership: effectiveMembership,
-              onExploreRewards: onExploreRewards,
-            );
-          }
-        },
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            gradient: cardGradient ?? theme.cardGradient,
-            borderRadius: BorderRadius.circular(20),
-            border: theme.cardBorder,
-            boxShadow: theme.cardShadow,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Stack(
-              children: [
-                // 1. Digital Membership Voucher Pass Background Texture
-                if (theme.backgroundImageAsset != null)
-                  Positioned.fill(
-                    child: Image.asset(
-                      theme.backgroundImageAsset!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                    ),
+      child: Semantics(
+        button: true,
+        label:
+            'Membership Card: $tierDisplayName tier, $coinsFormatted $coinsUnit for $greetingName',
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            if (onCardTap != null) {
+              onCardTap!();
+            } else {
+              MembershipDetailsBottomSheet.show(
+                context,
+                membership: effectiveMembership,
+                onExploreRewards: onExploreRewards,
+              );
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            height: 120,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              gradient: cardGradient ?? theme.cardGradient,
+              borderRadius: BorderRadius.circular(30),
+              border: theme.cardBorder,
+              //boxShadow: theme.cardShadow,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // 1. Full-Card Background Artwork (voucher pass with BoxFit.cover)
+                  Image.asset(
+                    backgroundAsset,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
                   ),
 
-                // 2. Translucent contrast glaze ensuring 100% typography readability
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient:
-                          theme.overlayGradient ??
-                          LinearGradient(
-                            colors: theme.tier == MembershipTier.silver
-                                ? [
-                                    const Color(0xD016181C),
-                                    const Color(0x781F232B),
-                                    const Color(0xC8121417),
-                                  ]
-                                : (theme.tier == MembershipTier.gold
-                                      ? [
-                                          const Color(0xD8141414),
-                                          const Color(0x88171717),
-                                          const Color(0xCC121212),
-                                        ]
-                                      : [
-                                          const Color(0xDE16181D),
-                                          const Color(0x8C1B1E25),
-                                          const Color(0xD0111317),
-                                        ]),
-                            stops: const [0.0, 0.5, 1.0],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                    ),
-                  ),
-                ),
+                  // // 2. Subtle Localized Gradient Overlay behind text only for Gold tier
+                  // if (effectiveMembership.tier == MembershipTier.gold)
+                  //   Positioned(
+                  //     left: 0,
+                  //     top: 0,
+                  //     bottom: 0,
+                  //     width: 220,
+                  //     child: IgnorePointer(
+                  //       child: Container(
+                  //         decoration: BoxDecoration(
+                  //           gradient: LinearGradient(
+                  //             colors: _getVignetteColors(
+                  //               effectiveMembership.tier,
+                  //             ),
+                  //             stops: const [0.0, 1.0],
+                  //             begin: Alignment.centerLeft,
+                  //             end: Alignment.centerRight,
+                  //           ),
+                  //         ),
+                  //       ),
+                  //     ),
+                  //   ),
 
-                // 3. Subtle specular top-edge clear coat highlight
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 1.5,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: 0.0),
-                          Colors.white.withValues(
-                            alpha: theme.tier == MembershipTier.gold
-                                ? 0.35
-                                : (theme.tier == MembershipTier.silver
-                                      ? 0.60
-                                      : 0.45),
-                          ),
-                          Colors.white.withValues(alpha: 0.0),
-                        ],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
+                  // // 3. Subtle Specular Top-Edge Clear Coat Highlight
+                  // Positioned(
+                  //   top: 0,
+                  //   left: 0,
+                  //   right: 0,
+                  //   height: 1.0,
+                  //   child: Container(
+                  //     decoration: BoxDecoration(
+                  //       gradient: LinearGradient(
+                  //         colors: [
+                  //           Colors.white.withValues(alpha: 0.0),
+                  //           Colors.white.withValues(alpha: 0.30),
+                  //           Colors.white.withValues(alpha: 0.0),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+
+                  // 4. Foreground Content: Greeting near top-left, Tier Chip + Coins in one row below
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 22,
                     ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // ── Header: Al Sewar Branding & Tier Badge ───────────────
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // Al Sewar Luxury Branding
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 34,
-                                height: 34,
-                                padding: const EdgeInsets.all(5),
-                                decoration: BoxDecoration(
-                                  color: theme.brandingColor.withValues(
-                                    alpha: 0.12,
-                                  ),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: SvgPicture.asset(
-                                  'assets/logos/AlSewar_logoonly_wh.svg',
-                                  fit: BoxFit.contain,
-                                ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Top-left: Greeting with customer's name
+                        Text(
+                          'Hi, $greetingName',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: AppTextStyles.headingFont,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: _getGreetingColor(effectiveMembership.tier),
+                            letterSpacing: -0.2,
+                            shadows: _getTextShadows(effectiveMembership.tier),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+
+                        // Membership tier FIRST and coin balance SECOND in one horizontal row
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Compact rounded chip for tier
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
                               ),
-                              const SizedBox(width: 7),
-                              Text(
-                                'AL SEWAR',
-                                style: TextStyle(
-                                  fontFamily: AppTextStyles.headingFont,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 2.0,
-                                  color: theme.brandingColor,
+                              decoration: BoxDecoration(
+                                color: _getTierChipColor(
+                                  effectiveMembership.tier,
                                 ),
-                              ),
-                            ],
-                          ),
-
-                          // Tier Badge & Optional Preview Tag
-                          Flexible(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Flexible(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 11,
-                                      vertical: 3.5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      gradient: theme.badgeGradient,
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: theme.badgeBorder,
-                                      boxShadow: theme.badgeShadow,
-                                    ),
-                                    child: Text(
-                                      effectiveMembership.tier.displayName
-                                          .toUpperCase(),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: AppTextStyles.headingFont,
-                                        color: theme.badgeTextColor,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.8,
-                                      ),
-                                    ),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _getTierChipBorderColor(
+                                    effectiveMembership.tier,
                                   ),
+                                  width: 1.0,
                                 ),
-                                if (isDevelopmentPlaceholder) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2.5,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.12,
-                                      ),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      'Preview Tier',
-                                      style: TextStyle(
-                                        fontFamily: AppTextStyles.bodyFont,
-                                        color: Colors.white.withValues(
-                                          alpha: 0.70,
-                                        ),
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color:
+                                        effectiveMembership.tier ==
+                                            MembershipTier.gold
+                                        ? const Color(0x40000000)
+                                        : const Color(0x18000000),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
                                   ),
                                 ],
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-
-                      // ── Available Points Label ───────────────────────────────
-                      Text(
-                        'AVAILABLE BALANCE',
-                        style: TextStyle(
-                          fontFamily: AppTextStyles.bodyFont,
-                          color: theme.balanceLabelColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.3,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-
-                      // ── Points Amount & Unit ─────────────────────────────────
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          if (theme.pointsShaderGradient != null)
-                            ShaderMask(
-                              shaderCallback: (rect) => theme
-                                  .pointsShaderGradient!
-                                  .createShader(rect),
+                              ),
                               child: Text(
-                                CustomerMembership.formatPoints(
-                                  effectiveMembership.points,
-                                ),
+                                tierDisplayName,
                                 style: TextStyle(
                                   fontFamily: AppTextStyles.headingFont,
-                                  color: theme.pointsTextColor,
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: -0.5,
-                                  shadows: theme.textEmbossShadow,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.8,
+                                  color: _getTierChipTextColor(
+                                    effectiveMembership.tier,
+                                  ),
                                 ),
                               ),
-                            )
-                          else
-                            Text(
-                              CustomerMembership.formatPoints(
-                                effectiveMembership.points,
-                              ),
-                              style: TextStyle(
-                                fontFamily: AppTextStyles.headingFont,
-                                color: theme.pointsTextColor,
-                                fontSize: 30,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.5,
-                                shadows: theme.textEmbossShadow,
-                              ),
                             ),
-                          const SizedBox(width: 6),
-                          Text(
-                            pointsLabel,
-                            style: TextStyle(
-                              fontFamily: AppTextStyles.bodyFont,
-                              color: theme.pointsUnitColor,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-
-                      // ── Refined Progress Bar or Platinum Achieved Indicator ──
-                      if (effectiveMembership.isPlatinum &&
-                          nextTierLabel == null) ...[
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.workspace_premium_outlined,
-                              size: 14,
-                              color: theme.pointsUnitColor,
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              'Platinum Privileges Unlocked',
-                              style: TextStyle(
-                                fontFamily: AppTextStyles.bodyFont,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: theme.pointsUnitColor,
-                                letterSpacing: 0.3,
+                            const SizedBox(width: 10),
+                            // Loyalty coin balance
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  '$coinsFormatted $coinsUnit',
+                                  style: TextStyle(
+                                    fontFamily: AppTextStyles.headingFont,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: _getCoinBalanceColor(
+                                      effectiveMembership.tier,
+                                    ),
+                                    letterSpacing: -0.3,
+                                    shadows: _getTextShadows(
+                                      effectiveMembership.tier,
+                                      isLarge: true,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                      ] else if (effectiveProgress != null) ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(3),
-                          child: LinearProgressIndicator(
-                            value: effectiveProgress.clamp(0.0, 1.0),
-                            minHeight: 3.5,
-                            backgroundColor: theme.progressTrackColor,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              theme.progressIndicatorColor,
-                            ),
-                          ),
-                        ),
-                        if (nextTierLabel != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            nextTierLabel!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: AppTextStyles.bodyFont,
-                              color: theme.balanceLabelColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
                       ],
-
-                      const SizedBox(height: 14),
-                      Container(height: 1, color: theme.dividerColor),
-                      const SizedBox(height: 12),
-
-                      // ── Footer: Customer Name, Card ID & Subtle Tap Affordance
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  effectiveMembership.memberName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontFamily: AppTextStyles.headingFont,
-                                    color: theme.memberNameColor,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    shadows: theme.textEmbossShadow,
-                                  ),
-                                ),
-                                if (effectiveMembership.membershipId !=
-                                    null) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'ID: ${effectiveMembership.membershipId}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: AppTextStyles.bodyFont,
-                                      color: theme.cardIdColor,
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-
-                          // Subtle Tap Affordance
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'Card Details',
-                                style: TextStyle(
-                                  fontFamily: AppTextStyles.bodyFont,
-                                  color: theme.affordanceColor.withValues(
-                                    alpha: 0.85,
-                                  ),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                size: 11,
-                                color: theme.affordanceColor,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
